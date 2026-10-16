@@ -1,0 +1,1606 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratório Funcional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>:root{
+  --paper:#f2f5f7; --surface:#ffffff; --surface-2:#eaf0f3; --ink:#142230; --muted:#566676; --line:#d6dee5;
+  --a:#d9532a; --a-soft:#fce8df; --b:#11817f; --b-soft:#d9f1ef; --ok:#2a8550; --ok-soft:#e0f3e7;
+  --bad:#c0392b; --bad-soft:#fbe4e0; --warn:#a66a00; --warn-soft:#fff1d6;
+  --code-bg:#0f1b26; --code-ink:#dce6ee; --code-dim:#7f93a6; --code-kw:#7fd8d4; --code-str:#ffb48f; --code-num:#f3d77a;
+  --shadow:0 1px 2px rgba(20,34,48,.06),0 8px 24px rgba(20,34,48,.06);
+  --f-disp:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",Consolas,"Cascadia Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0d151c; --surface:#141f29; --surface-2:#1a2733; --ink:#e3eaf0; --muted:#98a8b6; --line:#283746;
+  --a:#ff7c50; --a-soft:#3a2219; --b:#3fc3c0; --b-soft:#11302f; --ok:#5ec486; --ok-soft:#14301f;
+  --bad:#ff7d6c; --bad-soft:#3a1b17; --warn:#f0b54a; --warn-soft:#352812; --code-bg:#0a1219;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --paper:#0d151c; --surface:#141f29; --surface-2:#1a2733; --ink:#e3eaf0; --muted:#98a8b6; --line:#283746;
+  --a:#ff7c50; --a-soft:#3a2219; --b:#3fc3c0; --b-soft:#11302f; --ok:#5ec486; --ok-soft:#14301f;
+  --bad:#ff7d6c; --bad-soft:#3a1b17; --warn:#f0b54a; --warn-soft:#352812; --code-bg:#0a1219;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark;}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:84px}
+body{margin:0; background:var(--paper); color:var(--ink); font:17px/1.6 var(--f-body);}
+a{color:var(--b)}
+code,.mono{font-family:var(--f-mono); font-size:.88em}
+code,pre,.mono,.glossario dt{font-variant-ligatures:none; font-feature-settings:"liga" 0, "calt" 0}  /* <- e -> sem virar setas */
+:not(pre)>code{background:var(--surface-2); padding:.08em .35em; border-radius:4px}
+h1,h2,h3{font-family:var(--f-disp); line-height:1.15; text-wrap:balance; margin:0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid var(--b); outline-offset:2px}
+
+/* barra fixa */
+.barra{position:sticky; top:env(safe-area-inset-top,0px); z-index:20; background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+.barra-in{max-width:1100px; margin:0 auto; padding:.55rem 16px; display:flex; gap:1rem; align-items:center; flex-wrap:wrap}
+.barra-marca{font-family:var(--f-disp); font-weight:700; font-size:1rem; white-space:nowrap}
+.barra-marca span{color:var(--a)}
+.progresso{flex:1 1 180px; display:flex; align-items:center; gap:.6rem; min-width:160px}
+.progresso-trilho{flex:1; height:8px; border-radius:99px; background:var(--surface-2); overflow:hidden}
+.progresso-barra{height:100%; width:0; background:linear-gradient(90deg,var(--a),var(--b)); transition:width .5s ease}
+.progresso-txt{font-size:.85rem; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+.relogio{display:flex; align-items:center; gap:.5rem}
+.relogio-tempo{font-family:var(--f-mono); font-variant-numeric:tabular-nums; font-size:1.05rem; font-weight:600}
+.relogio-etapa{font-size:.82rem; color:var(--muted); max-width:220px; line-height:1.25}
+.relogio-etapa.atrasado{color:var(--warn)}
+
+/* botões */
+.btn{display:inline-flex; align-items:center; gap:.35rem; border:1px solid transparent; border-radius:8px; padding:.45rem .85rem;
+  font:600 .88rem/1.2 var(--f-body); cursor:pointer; text-decoration:none; transition:transform .12s ease, background .2s, box-shadow .2s}
+.btn:active{transform:translateY(1px)}
+.btn-copy{background:var(--b); color:#fff}
+.btn-copy.ok{background:var(--ok)}
+.btn-run{background:transparent; color:var(--code-ink); border-color:#3a4f62}
+.btn-run:hover{border-color:var(--code-kw)}
+.btn-a{background:var(--a); color:#fff}
+.btn-b{background:var(--b); color:#fff}
+.btn-a:disabled,.btn-b:disabled{opacity:.35; cursor:not-allowed}
+.btn-ghost{background:transparent; border-color:var(--line); color:var(--ink)}
+.btn-ghost:hover{border-color:var(--muted)}
+.btn-main{background:var(--ink); color:var(--paper); font-size:1rem; padding:.7rem 1.2rem}
+.btn-small{padding:.3rem .6rem; font-size:.8rem}
+
+/* abertura */
+.abertura{max-width:1100px; margin:0 auto; padding:2.5rem 16px 1.5rem; display:grid; grid-template-columns:1.05fr 1fr; gap:2.5rem; align-items:center}
+.eyebrow{margin:0 0 .4rem; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600}
+.abertura h1{font-size:clamp(2.2rem,5vw,3.4rem); letter-spacing:-.02em}
+.abertura h1 em{font-style:normal; background:linear-gradient(90deg,var(--a),var(--b)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.lede{font-size:1.12rem; color:var(--muted); max-width:58ch; margin:1rem 0 1.2rem}
+.chips{display:flex; flex-wrap:wrap; gap:.5rem; margin:0; padding:0; list-style:none}
+.chips li{background:var(--surface); border:1px solid var(--line); border-radius:99px; padding:.25rem .75rem; font-size:.85rem}
+
+/* animação de abertura: a esteira filter -> map -> reduce */
+.esteira{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:1.1rem; box-shadow:var(--shadow)}
+.esteira-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:.8rem}
+.esteira-top h3{font-size:1rem}
+.estacoes{list-style:none; margin:0 0 .9rem; padding:0; display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem}
+.estacoes li{text-align:center; font:700 .9rem/1.2 var(--f-mono); padding:.45rem .2rem; border-radius:8px; background:var(--surface-2);
+  border:1px solid var(--line); transition:all .3s; position:relative}
+.estacoes li small{font:400 .72rem var(--f-body); color:var(--muted)}
+.estacoes li + li::before{content:"→"; position:absolute; left:-.42rem; top:50%; transform:translate(-50%,-50%); color:var(--muted); font-weight:400}
+.estacoes li.agora{background:var(--b); border-color:var(--b); color:#fff; transform:translateY(-2px)}
+.estacoes li.agora small{color:#e6fbfa}
+.itens{display:flex; flex-wrap:wrap; gap:.45rem; justify-content:center; min-height:3rem; align-items:center; margin:.2rem 0 .8rem}
+.item{min-width:2.6rem; height:2.6rem; padding:0 .5rem; display:grid; place-items:center; border-radius:10px; font:700 1.05rem var(--f-mono);
+  background:var(--a-soft); color:var(--a); border:2px solid var(--a); transition:all .35s}
+.item.sai{opacity:.25; transform:translateY(8px) scale(.85); border-style:dashed}
+.item.novo{background:var(--b-soft); color:var(--b); border-color:var(--b); animation:pop .45s}
+.item.usa{background:var(--b); color:#fff; border-color:var(--b); transform:scale(1.1)}
+.item.usado{opacity:.3}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.acc{display:flex; justify-content:center; align-items:baseline; gap:.6rem}
+.acc span{font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.acc output{font:700 2rem/1 var(--f-mono); min-width:3ch; text-align:center}
+.esteira-leg{margin:.8rem 0 0; min-height:3.2em; font-size:.95rem}
+
+/* exemplos curtos dentro dos quadros de teoria */
+.mini pre{margin:.5rem 0 0; background:var(--code-bg); color:var(--code-ink); padding:.55rem .7rem; border-radius:8px;
+  font:12.5px/1.5 var(--f-mono); overflow-x:auto}
+.teoria ol.lista-cartoes{padding-left:1.3rem}
+
+/* simulador: a pilha do fatorial */
+.pilha{border:1px solid var(--line); border-radius:14px; padding:1rem; background:var(--paper); margin:1rem 0}
+.pilha-top{display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; margin-bottom:.9rem}
+.pilha-top label{font-weight:600}
+.pilha-top select{font:inherit; padding:.3rem .5rem; border-radius:8px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink)}
+.pilha-cols{display:grid; grid-template-columns:1fr 1fr; gap:.8rem}
+.pilha-col{border-radius:12px; padding:.75rem; min-width:0}
+.pilha-col h4{margin:0 0 .5rem; font:700 .95rem var(--f-disp)}
+.col-a{background:var(--a-soft)} .col-a h4{color:var(--a)}
+.col-b{background:var(--b-soft)} .col-b h4{color:var(--b)}
+.trace{list-style:none; margin:0; padding:0; display:grid; gap:.3rem; overflow-x:auto}
+.trace li{display:flex; align-items:center; gap:.5rem; font:13px/1.4 var(--f-mono); white-space:nowrap; padding:.25rem .45rem; border-radius:6px;
+  background:var(--surface); border:1px solid transparent; animation:pop .35s}
+.trace li.atual{border-color:currentColor; font-weight:700}
+.col-a .trace li.atual{color:var(--a)} .col-b .trace li.atual{color:var(--b)}
+.trace .pend{flex:none; font:600 .7rem var(--f-body); color:#fff; background:var(--a); border-radius:99px; padding:.05rem .45rem}
+.col-b .trace .pend{background:var(--b)}
+.trace .expr{color:var(--ink)}
+.pilha-medida{margin:.6rem 0 0; font-size:.88rem; font-weight:600}
+
+@media (max-width:760px){
+  .pilha-cols{grid-template-columns:1fr}
+  .estacoes li + li::before{display:none}
+}
+
+
+/* plano e instruções */
+.conteudo{max-width:860px; margin:0 auto; padding:0 16px 4rem}
+.bloco{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:1.4rem 1.5rem; margin:1.5rem 0; box-shadow:var(--shadow)}
+.bloco h2{font-size:1.4rem; margin-bottom:.8rem}
+.como{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; counter-reset:passo; padding:0; margin:0; list-style:none}
+.como li{counter-increment:passo; position:relative; padding-top:2.4rem; font-size:.95rem}
+.como li::before{content:counter(passo); position:absolute; top:0; left:0; width:1.9rem; height:1.9rem; border-radius:50%;
+  background:var(--ink); color:var(--paper); font:700 .95rem/1.9rem var(--f-disp); text-align:center}
+.como strong{display:block; font-family:var(--f-disp); font-size:1.02rem}
+.aviso{margin:1rem 0 0; padding:.7rem .9rem; border-radius:10px; background:var(--warn-soft); font-size:.92rem}
+.linha-tempo{display:flex; gap:3px; margin:.6rem 0 .3rem; border-radius:8px; overflow:hidden}
+.linha-tempo a{display:block; padding:.4rem .3rem; text-align:center; font-size:.72rem; font-weight:700; color:#fff; text-decoration:none;
+  background:var(--b); transition:filter .2s; overflow:hidden; white-space:nowrap}
+.linha-tempo a:nth-child(odd){background:var(--a)}
+.linha-tempo a:hover{filter:brightness(1.1)}
+.linha-tempo a.feita{background:var(--ok)!important}
+.linha-tempo a.atual{box-shadow:inset 0 -4px 0 rgba(0,0,0,.35)}
+.lt-leg{display:flex; justify-content:space-between; font-size:.78rem; color:var(--muted); font-variant-numeric:tabular-nums}
+
+/* etapas */
+.etapa{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:1.4rem 1.5rem 1.6rem; margin:2rem 0; box-shadow:var(--shadow);
+  animation:surge .6s ease both}
+@keyframes surge{from{transform:translateY(10px); opacity:.6}to{transform:none; opacity:1}}
+.etapa.concluida{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.etapa-head{display:flex; gap:1rem; align-items:center; margin-bottom:1rem}
+.etapa-num{flex:none; width:3rem; height:3rem; border-radius:12px; display:grid; place-items:center; font:800 1.5rem var(--f-disp); color:#fff;
+  background:var(--a)}
+.etapa:nth-of-type(even) .etapa-num{background:var(--b)}
+.etapa.concluida .etapa-num{background:var(--ok)}
+.etapa-tit{flex:1}
+.etapa-tit .eyebrow{margin-bottom:.15rem}
+.etapa h2{font-size:1.5rem}
+.feito{display:flex; align-items:center; gap:.35rem; font-size:.88rem; font-weight:600; color:var(--muted); cursor:pointer; white-space:nowrap}
+.feito input{width:1.1rem; height:1.1rem; accent-color:var(--ok)}
+.teoria{border-left:0; background:var(--surface-2); border-radius:12px; padding:.9rem 1.1rem; margin:.5rem 0 1.1rem}
+.teoria p{margin:.5rem 0}
+.teoria :not(pre)>code{background:var(--surface)}
+.lane .btn{justify-content:center}
+.teoria h3{font-size:1rem}
+.nota{font-size:.9rem; color:var(--muted)}
+.duas{display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin:.7rem 0}
+.mini{border-radius:10px; padding:.7rem .9rem; background:var(--surface)}
+.mini p{margin:.3rem 0 0; font-size:.93rem}
+.mini-a h3{color:var(--a)} .mini-b h3{color:var(--b)}
+.lista-cartoes{margin:.5rem 0; padding-left:1.1rem}
+.lista-cartoes li{margin:.3rem 0}
+.ta,.tb{display:inline-grid; place-items:center; width:1.45em; height:1.45em; border-radius:6px; color:#fff; font-weight:800; font-size:.85em}
+.ta{background:var(--a)} .tb{background:var(--b)}
+.sub{font-family:var(--f-disp); font-weight:700; margin:1.6rem 0 .3rem}
+
+/* código */
+.code{margin:1rem 0; border-radius:12px; overflow:hidden; background:var(--code-bg); border:1px solid #22384b}
+.code figcaption{display:flex; justify-content:space-between; align-items:center; gap:.6rem; flex-wrap:wrap; padding:.55rem .8rem; border-bottom:1px solid #22384b}
+.code-file{font-family:var(--f-mono); font-size:.82rem; color:var(--code-dim); display:flex; align-items:center; gap:.5rem}
+.code-lang{font-family:var(--f-body); font-weight:700; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--code-bg); background:var(--code-kw); padding:.1rem .45rem; border-radius:4px}
+.code-acts{display:flex; gap:.4rem; flex-wrap:wrap}
+.code pre{margin:0; padding:.9rem 1rem; overflow-x:auto; font:13.5px/1.55 var(--f-mono); color:var(--code-ink); tab-size:4}
+.tk-c{color:var(--code-dim); font-style:italic} .tk-k{color:var(--code-kw)} .tk-s{color:var(--code-str)} .tk-n{color:var(--code-num)}
+
+/* passos, perguntas, campos */
+.passos{margin:.6rem 0; padding-left:1.3rem}
+.passos li{margin:.35rem 0}
+.prever,.q{margin:1rem 0}
+.prever label,.q label{display:block; font-weight:600; margin-bottom:.35rem}
+.tag{display:inline-block; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; padding:.15rem .5rem; border-radius:99px; margin-right:.3rem; vertical-align:2px}
+.tag-prever{background:var(--warn-soft); color:var(--warn)}
+.q-num{display:inline-block; min-width:2.2rem; font-family:var(--f-disp); color:var(--b)}
+textarea.campo,input.campo,select.campo{width:100%; font:inherit; font-size:.97rem; color:var(--ink); background:var(--paper); border:1.5px solid var(--line);
+  border-radius:10px; padding:.55rem .7rem; transition:border-color .2s, background .2s}
+textarea.campo{resize:vertical; min-height:3.2rem}
+textarea.campo:focus,input.campo:focus,select.campo:focus{border-color:var(--b); background:var(--surface); outline:none}
+.campo.preenchido{border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+textarea.mono{font-family:var(--f-mono); font-size:.86rem}
+.saida{margin:1rem 0; padding:.9rem; border:2px dashed var(--line); border-radius:12px; transition:border-color .2s, background .2s}
+.saida.alvo{border-color:var(--b); background:var(--b-soft)}
+.saida label:first-child{display:block; font-weight:600; margin-bottom:.4rem}
+.prints{display:flex; flex-wrap:wrap; gap:.6rem; margin:.6rem 0}
+.print{position:relative; max-width:240px}
+.print img{display:block; max-width:100%; border-radius:8px; border:1px solid var(--line)}
+.print button{position:absolute; top:4px; right:4px; border:0; border-radius:6px; background:rgba(0,0,0,.65); color:#fff; font-size:.75rem; padding:.15rem .45rem; cursor:pointer}
+.btn-file{font-size:.82rem}
+.tabela-campos{display:grid; grid-template-columns:repeat(3,1fr); gap:.7rem; margin:1rem 0; align-items:end}
+.tabela-campos .tc-tit{grid-column:1/-1; font-weight:600}
+.tabela-campos label{font-size:.85rem; color:var(--muted); display:grid; gap:.2rem}
+.ident{display:grid; grid-template-columns:2fr 1fr 1fr; gap:.8rem; margin:1rem 0}
+.ident-campo label{display:block; font-weight:600; font-size:.9rem; margin-bottom:.25rem}
+.quem{display:grid; grid-template-columns:1fr 1.2fr; gap:.6rem 1rem; align-items:center; margin:1rem 0}
+.quem label{font-weight:600}
+
+/* quadros "Como ler este código" e "cola" */
+.glossario{margin:.6rem 0 1rem; border:1px solid var(--line); border-radius:12px; background:var(--surface)}
+.glossario summary{cursor:pointer; padding:.6rem .9rem; font-weight:700; color:var(--b); list-style:none; display:flex; align-items:center; gap:.5rem}
+.glossario summary::-webkit-details-marker{display:none}
+.glossario summary::before{content:"▸"; transition:transform .2s; display:inline-block}
+.glossario[open] summary::before{transform:rotate(90deg)}
+.glossario[open] summary{border-bottom:1px solid var(--line)}
+.glossario dl{margin:0; padding:.7rem .9rem; display:grid; grid-template-columns:minmax(9rem,max-content) 1fr; gap:.45rem 1rem}
+.glossario dt{font-family:var(--f-mono); font-size:.84rem; font-weight:600; overflow-wrap:anywhere}
+.glossario dd{margin:0; font-size:.94rem}
+.glos-links,.links{margin:0; padding:0 .9rem .8rem; font-size:.9rem}
+.links{padding:0}
+.cola{border:2px solid var(--b); border-radius:12px; padding:.8rem 1rem; margin:1rem 0; background:var(--b-soft)}
+.cola h3{font-size:1rem; margin-bottom:.4rem}
+.teoria pre.exemplo{margin:.5rem 0; background:var(--code-bg); color:var(--code-ink); padding:.55rem .7rem; border-radius:8px; font:12.5px/1.5 var(--f-mono); overflow-x:auto}
+.cola pre{margin:.35rem 0 .7rem; background:var(--code-bg); color:var(--code-ink); padding:.55rem .7rem; border-radius:8px; font:12.5px/1.5 var(--f-mono); overflow-x:auto}
+@media (max-width:760px){.glossario dl{grid-template-columns:1fr; gap:.15rem} .glossario dd{margin-bottom:.4rem}}
+
+/* relatório */
+.relatorio-acoes{display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem}
+#relatorio{display:none}
+#relatorio.visivel{display:block}
+.rel{background:#fff; color:#111; border-radius:12px; padding:1.5rem; margin-top:1rem; border:1px solid var(--line); font:15px/1.5 var(--f-body)}
+.rel h1{font-size:1.5rem} .rel h2{font-size:1.15rem; margin:1.4rem 0 .5rem; padding-bottom:.25rem; border-bottom:2px solid #ddd}
+.rel dl{margin:0} .rel dt{font-weight:700; margin-top:.6rem} .rel dd{margin:.2rem 0 0; white-space:pre-wrap}
+.rel dd.vazio{color:#b42318; font-style:italic}
+.rel img{max-width:100%; border:1px solid #ccc; border-radius:6px; margin:.4rem 0}
+.rel pre{background:#f4f4f4; padding:.6rem; border-radius:6px; white-space:pre-wrap; font:12.5px/1.45 var(--f-mono); margin:.3rem 0}
+.rel-falta{background:var(--warn-soft); color:var(--ink); border-radius:10px; padding:.7rem .9rem; margin-top:1rem}
+.salvo{font-size:.8rem; color:var(--muted)}
+
+footer.rodape{max-width:860px; margin:0 auto; padding:0 16px 3rem; color:var(--muted); font-size:.85rem}
+
+@media (max-width:760px){
+  .abertura{grid-template-columns:1fr; padding-top:1.5rem}
+  .duas,.sim-lanes,.pistas{grid-template-columns:1fr}
+  .tabela-campos{grid-template-columns:1fr}
+  .ident{grid-template-columns:1fr}
+  .quem{grid-template-columns:1fr}
+  .relogio-etapa{display:none}
+  .etapa{padding:1.1rem}
+  .etapa-head{flex-wrap:wrap}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important; transition:none!important} html{scroll-behavior:auto}}
+@media print{
+  body.imprimindo > *:not(#relatorio){display:none!important}
+  body.imprimindo{background:#fff}
+  body.imprimindo #relatorio{display:block!important; padding:0}
+  body.imprimindo .relatorio-acoes,body.imprimindo .rel-falta{display:none!important}
+  body.imprimindo .rel{border:0; padding:0}
+  .rel h2{break-after:avoid} .rel img{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="barra">
+  <div class="barra-in">
+    <span class="barra-marca">Aula 12 · <span>Funcional</span></span>
+    <div class="progresso" aria-label="Progresso">
+      <div class="progresso-trilho"><div class="progresso-barra" id="progresso-barra"></div></div>
+      <span class="progresso-txt" id="progresso-txt">0 de 9 etapas</span>
+    </div>
+    <div class="relogio">
+      <span class="relogio-tempo" id="relogio-tempo">0:00 / 75:00</span>
+      <button type="button" class="btn btn-ghost btn-small" id="relogio-btn">Iniciar</button>
+      <button type="button" class="btn btn-ghost btn-small" id="relogio-zerar" title="Zerar o cronômetro">Zerar</button>
+      <span class="relogio-etapa" id="relogio-etapa"></span>
+    </div>
+    <a class="btn btn-ghost btn-small" href="#entrega">Entrega</a>
+  </div>
+</div>
+
+<header class="abertura">
+  <div>
+    <p class="eyebrow">Aula 12 · Paradigmas de Linguagens de Programação · Engenharia de Software</p>
+    <h1>Laboratório <em>Funcional</em></h1>
+    <p class="lede">Uma atividade individual de 1h15. Você vai programar sem variáveis que mudam: funções puras,
+    listas em Scheme, recursão em cauda, listas infinitas em Haskell e o funcional que já está dentro do
+    Java, do JavaScript e do Python. No final, esta página monta o seu relatório para entrega.</p>
+    <ul class="chips">
+      <li>1h15 · 9 etapas</li><li>Python, Scheme, Haskell, JavaScript e Java</li><li>Sebesta, Cap. 15 (p. 631-686)</li>
+    </ul>
+  </div>
+  <div class="esteira" aria-label="Animação: uma lista passa por filter, map e reduce">
+    <div class="esteira-top"><h3>Uma esteira de funções</h3><button type="button" class="btn btn-ghost btn-small" id="anim-btn">Pausar</button></div>
+    <ol class="estacoes">
+      <li>lista<br><small>[1..6]</small></li><li>filter<br><small>é par?</small></li>
+      <li>map<br><small>x²</small></li><li>reduce<br><small>soma</small></li>
+    </ol>
+    <div class="itens" id="itens" aria-hidden="true"></div>
+    <div class="acc"><span>resultado</span><output id="acc">-</output></div>
+    <p class="esteira-leg" id="esteira-leg" aria-live="off"></p>
+  </div>
+</header>
+
+<main class="conteudo">
+  <section class="bloco" aria-labelledby="como-tit">
+    <h2 id="como-tit">Como funciona</h2>
+    <ol class="como">
+      <li><strong>Preveja</strong>Antes de executar, escreva o que você acha que vai acontecer. Errar a previsão é parte do aprendizado.</li>
+      <li><strong>Execute</strong>Use <em>Copiar código</em> e <em>Abrir no OneCompiler</em>. Lá, apague o exemplo, cole e clique em Run.</li>
+      <li><strong>Registre</strong>Cole o texto da saída ou um print (Win+Shift+S e depois Ctrl+V na área tracejada). Responda às perguntas.</li>
+      <li><strong>Entregue</strong>No final, gere o relatório, salve em PDF e envie no ambiente da disciplina.</li>
+    </ol>
+    <p class="aviso"><strong>Suas respostas ficam salvas neste navegador, neste computador.</strong> Se fechar a página,
+    é só abrir o arquivo de novo. Se trocar de computador, elas não vão junto: gere o relatório antes de sair.</p>
+    <h3 style="margin-top:1.2rem">Plano de tempo (75 min)</h3>
+    <div class="linha-tempo"><a href="#e0" style="flex:8" title="Preparação (8 min)">Prep.</a><a href="#e1" style="flex:9" title="Prática 1: funções puras (9 min)">P1</a><a href="#e2" style="flex:9" title="Prática 2: Scheme (9 min)">P2</a><a href="#e3" style="flex:10" title="Prática 3: recursão em cauda (10 min)">P3</a><a href="#e4" style="flex:9" title="Prática 4: complete as funções (9 min)">P4</a><a href="#e5" style="flex:9" title="Prática 5: Haskell (9 min)">P5</a><a href="#e6" style="flex:7" title="Prática 6: você já usa funcional (7 min)">P6</a><a href="#e7" style="flex:8" title="Prática 7: o laço vira pipeline (8 min)">P7</a><a href="#e8" style="flex:6" title="Fechamento (6 min)">Fim</a></div>
+    <div class="lt-leg"><span>0:00</span><span>0:26</span><span>0:54</span><span>1:15</span></div>
+  </section>
+
+  
+<section class="etapa" id="e0" data-etapa="0" data-titulo="Programar com funções matemáticas">
+  <header class="etapa-head">
+    <div class="etapa-num" aria-hidden="true">0</div>
+    <div class="etapa-tit">
+      <p class="eyebrow">Preparação · 8 min · 0:00 a 0:08</p>
+      <h2>Programar com funções matemáticas</h2>
+    </div>
+    <label class="feito"><input type="checkbox" class="chk-feito" id="feito-0"> Concluí</label>
+  </header>
+  
+<div class="teoria">
+  <p>Nas linguagens imperativas, o programa tem <strong>estado</strong>: variáveis que mudam durante a
+  execução, e quem lê o código precisa acompanhar essas mudanças (p. 632-633). O paradigma
+  <strong>funcional</strong> se baseia nas <strong>funções matemáticas</strong>, que mapeiam cada entrada
+  sempre na mesma saída, sem efeitos colaterais (p. 633-634).</p>
+  <div class="duas">
+    <div class="mini mini-a"><h3>Transparência referencial</h3><p>A mesma chamada, com os mesmos
+    parâmetros, sempre dá o mesmo resultado. Por isso cada função pode ser testada sozinha (p. 636-637).</p></div>
+    <div class="mini mini-b"><h3>Formas funcionais</h3><p>Funções que recebem ou devolvem funções:
+    composição, <em>aplicar-a-todos</em> (o <code>map</code>) e redução (p. 635-636).</p></div>
+  </div>
+  <p>A notação <strong>lambda</strong> (Alonzo Church, 1941) define funções sem nome:
+  <code>λ(x) x * x * x</code>, aplicada a 2, dá 8 (p. 635). Numa linguagem puramente funcional não há
+  variáveis nem atribuição, e a repetição é feita com <strong>recursão</strong> (p. 636).</p>
+</div>
+<div class="teoria">
+  <h3>Função pura × função impura</h3>
+  <p>Uma função é <strong>pura</strong> quando se comporta como uma função da matemática (p. 634). Para isso,
+  ela precisa cumprir <strong>duas</strong> condições:</p>
+  <ol class="lista-cartoes">
+    <li><strong>O resultado depende só dos parâmetros.</strong> Ela não lê nada de fora que possa mudar:
+    variável global, relógio, sorteio, teclado, arquivo, banco de dados. Chamada com os mesmos parâmetros,
+    devolve sempre o mesmo resultado.</li>
+    <li><strong>Não tem efeito colateral.</strong> Ela não altera nada fora dela: não muda variável global,
+    não modifica os parâmetros recebidos (uma lista, por exemplo), não escreve na tela, em arquivo ou no banco.
+    O único efeito é devolver um valor. (Os efeitos colaterais apareceram na aula de expressões, com o
+    <code>a + fun1()</code>.)</li>
+  </ol>
+  <p>Se qualquer uma das condições falhar, a função é <strong>impura</strong>. Isso não é um defeito em si:
+  todo programa útil precisa imprimir, gravar e ler alguma coisa. A ideia do estilo funcional é deixar a maior
+  parte da lógica em funções puras, fáceis de testar, e concentrar os efeitos em poucos lugares.</p>
+  <div class="duas">
+    <div class="mini mini-b"><h3>Pura</h3>
+<pre><code data-lang="python">def dobro(x):
+    return 2 * x        # só depende de x
+
+def media(notas):
+    return sum(notas) / len(notas)   # só lê o parâmetro</code></pre></div>
+    <div class="mini mini-a"><h3>Impuras</h3>
+<pre><code data-lang="python">taxa = 0.1
+def com_taxa(valor):
+    return valor * (1 + taxa)   # depende de fora: e se taxa mudar?
+
+def saudar(nome):
+    print("Olá,", nome)        # efeito colateral: escreve na tela</code></pre></div>
+  </div>
+  <p><strong>Teste prático:</strong> troque uma chamada da função pelo valor que ela devolveu. Se o programa
+  continuar fazendo exatamente a mesma coisa, a função é pura. Esse é o teste da <strong>transparência
+  referencial</strong> (p. 636): <code>dobro(3)</code> pode ser trocado por <code>6</code> em qualquer lugar; já
+  <code>saudar("Ana")</code> não pode ser trocado por nada, porque a mensagem na tela sumiria.</p>
+</div>
+
+<div class="ident">
+  <div class="ident-campo"><label for="aluno-nome">Seu nome</label>
+    <input class="campo" id="aluno-nome" data-rotulo="Nome" autocomplete="name"></div>
+  <div class="ident-campo"><label for="aluno-ra">RA</label>
+    <input class="campo" id="aluno-ra" data-rotulo="RA" inputmode="numeric"></div>
+  <div class="ident-campo"><label for="aluno-turma">Turma</label>
+    <input class="campo" id="aluno-turma" data-rotulo="Turma"></div>
+</div>
+<p class="sub">Puras ou impuras? Classifique cada função em Python, usando as duas condições acima.</p>
+<p class="nota">O que fazem as funções do Python usadas abaixo: <code>datetime.now()</code> devolve a data e a hora
+do momento; <code>random.randint(1, 6)</code> sorteia um inteiro de 1 a 6; <code>sum(lista)</code> soma os elementos;
+<code>print(msg)</code> escreve na tela; <code>lista.append(x)</code> acrescenta <code>x</code> no fim da própria lista.</p>
+<div class="quem">
+  <label for="r-0-a"><code>def area(r): return 3.14159 * r * r</code></label>
+  <select class="campo" id="r-0-a" data-rotulo="def area(r): return 3.14159 * r * r"><option></option><option>Pura</option><option>Impura</option></select>
+  <label for="r-0-b"><code>def agora(): return datetime.now()</code></label>
+  <select class="campo" id="r-0-b" data-rotulo="def agora(): return datetime.now()"><option></option><option>Pura</option><option>Impura</option></select>
+  <label for="r-0-c"><code>def total(lista): return sum(lista)</code></label>
+  <select class="campo" id="r-0-c" data-rotulo="def total(lista): return sum(lista)"><option></option><option>Pura</option><option>Impura</option></select>
+  <label for="r-0-d"><code>def registra(msg): print(msg)</code></label>
+  <select class="campo" id="r-0-d" data-rotulo="def registra(msg): print(msg)"><option></option><option>Pura</option><option>Impura</option></select>
+  <label for="r-0-e"><code>def sorteia(): return random.randint(1, 6)</code></label>
+  <select class="campo" id="r-0-e" data-rotulo="def sorteia(): return random.randint(1, 6)"><option></option><option>Pura</option><option>Impura</option></select>
+  <label for="r-0-f"><code>def poe(lista, x): lista.append(x); return lista</code></label>
+  <select class="campo" id="r-0-f" data-rotulo="def poe(lista, x): lista.append(x); return lista"><option></option><option>Pura</option><option>Impura</option></select>
+</div>
+
+<div class="q">
+  <label for="r-0-1"><span class="q-num">0.1</span> Escolha duas funções que você marcou como <strong>impuras</strong> e explique, para cada uma, o que a impede de ser pura.</label>
+  <textarea class="campo" id="r-0-1" data-rotulo="0.1 Escolha duas funções que você marcou como impuras e explique, para cada uma, o que a impede de ser pura." rows="4"></textarea>
+</div>
+
+</section>
+
+<section class="etapa" id="e1" data-etapa="1" data-titulo="Funções puras e formas funcionais">
+  <header class="etapa-head">
+    <div class="etapa-num" aria-hidden="true">1</div>
+    <div class="etapa-tit">
+      <p class="eyebrow">Prática 1 · Python · 9 min · 0:08 a 0:17</p>
+      <h2>Funções puras e formas funcionais</h2>
+    </div>
+    <label class="feito"><input type="checkbox" class="chk-feito" id="feito-1"> Concluí</label>
+  </header>
+  
+<div class="teoria">
+  <p>O programa compara uma função <strong>impura</strong> (<code>proximo_id</code>, que depende de uma
+  variável global) com uma <strong>pura</strong> (<code>cubo</code>). Depois usa as três formas funcionais
+  do livro: <strong>composição</strong> (<code>h = f ∘ g</code>, ou seja, <code>h(x) = f(g(x))</code>),
+  <strong>aplicar-a-todos</strong> (<code>map</code>) e <strong>redução</strong> (<code>reduce</code>).</p>
+</div>
+
+<details class="glossario" id="glos-python">
+  <summary>Como ler este código (Python)</summary>
+  <dl><dt>global contador</dt><dd>avisa que a função vai alterar a variável <code>contador</code>, que fica fora dela.</dd><dt>f"{prefixo}-{contador}"</dt><dd>um texto em que os valores das variáveis entram no lugar das chaves (<em>f-string</em>). Com prefixo <code>A</code> e contador 1, dá <code>A-1</code>.</dd><dt>lambda x: x * x</dt><dd>uma função sem nome: recebe <code>x</code> e devolve <code>x * x</code>.</dd><dt>compor(f, g)</dt><dd>definida no próprio programa: devolve a função <code>lambda x: f(g(x))</code>.</dd><dt>map(f, lista)</dt><dd>aplica <code>f</code> a cada elemento; <code>list(...)</code> transforma o resultado em lista.</dd><dt>reduce(f, lista, inicial)</dt><dd>combina os elementos da esquerda para a direita, começando do valor inicial: com <code>f</code> = soma, <code>reduce(f, [4, 9, 16], 0)</code> calcula <code>((0 + 4) + 9) + 16</code>.</dd><dt># texto</dt><dd>comentário.</dd></dl>
+  <p class="glos-links">Para saber mais: <a href="https://docs.python.org/pt-br/3/howto/functional.html" target="_blank" rel="noopener">Programação funcional em Python (documentação oficial) ↗</a> · <a href="https://docs.python.org/pt-br/3/library/functools.html#functools.reduce" target="_blank" rel="noopener">functools.reduce ↗</a></p>
+</details>
+
+<div class="prever">
+  <label for="r-1-prev"><span class="tag tag-prever">Antes de executar</span> O que as linhas <strong>1</strong>, <strong>4</strong> e <strong>7</strong> vão imprimir?</label>
+  <textarea class="campo" id="r-1-prev" data-rotulo="Previsão: O que as linhas 1, 4 e 7 vão imprimir?" rows="2"></textarea>
+</div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Python</span>p1_puras.py</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p1_puras">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/python" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p1_puras" data-lang="python"># Prática 1 - Funções puras e formas funcionais (Sebesta 15.2 e 15.3, p. 633-637)
+# Cole em https://onecompiler.com/python
+from functools import reduce
+
+contador = 0
+
+def proximo_id(prefixo):            # IMPURA: depende de um estado que muda
+    global contador
+    contador += 1
+    return f&quot;{prefixo}-{contador}&quot;
+
+def cubo(x):                         # PURA: só depende do parâmetro
+    return x * x * x
+
+print(&quot;1:&quot;, proximo_id(&quot;A&quot;), proximo_id(&quot;A&quot;))
+print(&quot;2:&quot;, cubo(2) + cubo(2) == 2 * cubo(2))
+print(&quot;3:&quot;, (lambda x: x * x * x)(2))            # a expressão lambda da p. 635
+
+def compor(f, g):                    # composição: compor(f, g)(x) = f(g(x))
+    return lambda x: f(g(x))
+
+f = lambda x: x + 2
+g = lambda x: 3 * x
+print(&quot;4:&quot;, compor(f, g)(4))
+print(&quot;5:&quot;, list(map(lambda x: x * x, [2, 3, 4])))      # aplicar-a-todos (p. 636)
+print(&quot;6:&quot;, reduce(lambda acc, x: acc + x, [4, 9, 16], 0))
+
+notas = [7, 3, 9]
+ordenadas = sorted(notas)            # cria uma lista NOVA
+print(&quot;7:&quot;, notas, ordenadas)
+notas.sort()                         # altera a lista original
+print(&quot;8:&quot;, notas)</code></pre>
+</figure>
+<ol class="passos">
+  <li>Copie, execute no OneCompiler e registre a saída.</li>
+  <li>Troque <code>compor(f, g)</code> por <code>compor(g, f)</code> na linha 4 e execute de novo.</li>
+</ol>
+
+<div class="saida" data-zona="s-1">
+  <label for="s-1">Saídas (original e com compor(g, f)): cole o texto da saída ou um print (Ctrl+V)</label>
+  <textarea class="campo mono" id="s-1" data-rotulo="Saídas (original e com compor(g, f))" rows="4"
+    placeholder="Cole aqui o texto da saída. Para colar um print, use Win+Shift+S e depois Ctrl+V aqui."></textarea>
+  <div class="prints" aria-live="polite"></div>
+  <label class="btn btn-ghost btn-file">Anexar imagem<input type="file" accept="image/*" multiple hidden></label>
+</div>
+
+<div class="q">
+  <label for="r-1-1"><span class="q-num">1.1</span> Por que <code>proximo_id("A")</code> devolve valores diferentes para a mesma entrada? Por que isso dificulta os testes (p. 637)?</label>
+  <textarea class="campo" id="r-1-1" data-rotulo="1.1 Por que proximo_id(&quot;A&quot;) devolve valores diferentes para a mesma entrada? Por que isso dificulta os testes (p. 637)?" rows="3"></textarea>
+</div>
+
+<div class="q">
+  <label for="r-1-2"><span class="q-num">1.2</span> <code>compor(f, g)(4)</code> e <code>compor(g, f)(4)</code> deram valores diferentes. Calcule os dois à mão e explique a diferença.</label>
+  <textarea class="campo" id="r-1-2" data-rotulo="1.2 compor(f, g)(4) e compor(g, f)(4) deram valores diferentes. Calcule os dois à mão e explique a diferença." rows="3"></textarea>
+</div>
+
+<div class="q">
+  <label for="r-1-3"><span class="q-num">1.3</span> Qual é a diferença entre <code>sorted(notas)</code> e <code>notas.sort()</code>? Qual dos dois segue o estilo funcional, e por quê?</label>
+  <textarea class="campo" id="r-1-3" data-rotulo="1.3 Qual é a diferença entre sorted(notas) e notas.sort()? Qual dos dois segue o estilo funcional, e por quê?" rows="3"></textarea>
+</div>
+
+</section>
+
+<section class="etapa" id="e2" data-etapa="2" data-titulo="Scheme: tudo é lista">
+  <header class="etapa-head">
+    <div class="etapa-num" aria-hidden="true">2</div>
+    <div class="etapa-tit">
+      <p class="eyebrow">Prática 2 · Scheme · 9 min · 0:17 a 0:26</p>
+      <h2>Scheme: tudo é lista</h2>
+    </div>
+    <label class="feito"><input type="checkbox" class="chk-feito" id="feito-2"> Concluí</label>
+  </header>
+  
+<div class="teoria">
+  <p>O LISP (McCarthy, 1959) foi a primeira linguagem funcional (p. 637), e o <strong>Scheme</strong> é um
+  dialeto pequeno dele, muito usado no ensino (p. 641). Tudo é escrito em <strong>notação prefixa</strong>:
+  o operador vem primeiro, <code>(+ 3 7)</code>. Programas e dados têm a mesma forma, a
+  <strong>lista</strong>.</p>
+  <p><strong>Como o Scheme avalia uma lista:</strong> o primeiro elemento é a <em>função</em> e os demais são
+  os <em>parâmetros</em>. Em <code>(+ 3 7)</code>, ele chama <code>+</code> com 3 e 7; em
+  <code>(quadrado 5)</code>, chama <code>quadrado</code> com 5. Os parâmetros são avaliados antes da chamada,
+  pela mesma regra. O apóstrofo (<code>'</code>) é a abreviação de <code>QUOTE</code> (p. 646): descubra na
+  prática para que ele serve.</p>
+  <p>Três funções fazem quase tudo com listas (p. 646-648):</p>
+  <ul class="lista-cartoes">
+    <li><code>car</code>: o primeiro elemento da lista;</li>
+    <li><code>cdr</code>: o resto da lista, sem o primeiro;</li>
+    <li><code>cons</code>: constrói uma lista colocando um elemento na frente de outra.</li>
+  </ul>
+  <p class="nota">Os nomes estranhos vêm das partes da palavra de memória do IBM 704, onde o LISP foi
+  implementado (p. 647).</p>
+</div>
+
+<details class="glossario" id="glos-scheme">
+  <summary>Como ler este código (Scheme)</summary>
+  <dl><dt>(f a b)</dt><dd>chama a função <code>f</code> com os parâmetros <code>a</code> e <code>b</code>. O primeiro elemento da lista é sempre a função.</dd><dt>(define (nome x) corpo)</dt><dd>define uma função chamada <code>nome</code>, com parâmetro <code>x</code>.</dd><dt>(lambda (x) corpo)</dt><dd>uma função sem nome, com parâmetro <code>x</code>.</dd><dt>(if teste sim não)</dt><dd>se o teste for verdadeiro, devolve <code>sim</code>; senão, <code>não</code>.</dd><dt>(cond (t1 r1) (t2 r2) (else r3))</dt><dd>vários casos, como <code>if</code> / <code>else if</code> / <code>else</code>: devolve o resultado do primeiro teste verdadeiro.</dd><dt>'positivo</dt><dd>um <em>símbolo</em>: uma palavra usada como valor, parecida com uma string.</dd><dt>'()</dt><dd>a lista vazia.</dd><dt>#t  #f</dt><dd>verdadeiro e falso.</dd><dt>(null? lis)</dt><dd>a lista está vazia?</dd><dt>(eq? a b)</dt><dd><code>a</code> e <code>b</code> são o mesmo símbolo?</dd><dt>(even? n)  (equal? a b)</dt><dd><code>n</code> é par? / <code>a</code> e <code>b</code> têm o mesmo conteúdo?</dd><dt>(display x)  (newline)</dt><dd>escreve <code>x</code> na tela / pula uma linha. A função <code>mostra</code>, definida no próprio programa, faz as duas coisas.</dd><dt>; texto</dt><dd>comentário.</dd></dl>
+  <p class="glos-links">Para saber mais: <a href="https://www.scheme.com/tspl4/start.html#./start:h2" target="_blank" rel="noopener">Expressões simples e listas (TSPL, em inglês) ↗</a> · <a href="https://www.scheme.com/tspl4/start.html#./start:h7" target="_blank" rel="noopener">Condicionais (TSPL, em inglês) ↗</a> · <a href="https://www.scheme.com/tspl4/start.html#./start:h8" target="_blank" rel="noopener">Recursão (TSPL, em inglês) ↗</a></p>
+</details>
+<div class="prever">
+  <label><span class="tag tag-prever">Antes de executar</span> O que você acha que cada expressão devolve?</label>
+</div>
+<div class="tabela-campos">
+  <label><code>(car '(A B C))</code><input class="campo mono" id="r-2-p1" data-rotulo="Previsão: (car '(A B C))"></label>
+  <label><code>(cdr '(A B C))</code><input class="campo mono" id="r-2-p2" data-rotulo="Previsão: (cdr '(A B C))"></label>
+  <label><code>(cons '(A B) '(C D))</code><input class="campo mono" id="r-2-p3" data-rotulo="Previsão: (cons '(A B) '(C D))"></label>
+</div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Scheme</span>p2_scheme.scm</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p2_scheme">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/scheme" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p2_scheme" data-lang="scheme">; Prática 2 - Scheme: o essencial (Sebesta 15.5, p. 641-650)
+; Cole em https://onecompiler.com/scheme
+(define (mostra x) (display x) (newline))
+
+(mostra (+ 3 7 10 2))              ; notação prefixa: o operador vem primeiro
+(mostra (* 2 (+ 3 4)))
+
+(define (quadrado x) (* x x))      ; definir uma função
+(mostra (quadrado 5))
+(mostra ((lambda (x) (* x x x)) 2)) ; uma função sem nome, aplicada a 2
+
+(define (sinal n)
+  (cond ((&gt; n 0) &#x27;positivo)
+        ((&lt; n 0) &#x27;negativo)
+        (else &#x27;zero)))
+(mostra (sinal -7))
+
+(mostra (car &#x27;(A B C)))            ; o primeiro elemento
+(mostra (cdr &#x27;(A B C)))            ; o resto da lista
+(mostra (cons &#x27;A &#x27;(B C)))          ; constrói uma lista
+(mostra (cons &#x27;(A B) &#x27;(C D)))
+(mostra (car (cdr &#x27;(A B C))))</code></pre>
+</figure>
+<ol class="passos">
+  <li>Execute e confira as suas previsões.</li>
+  <li>Tire o apóstrofo de <code>(car '(A B C))</code>, deixando <code>(car (A B C))</code>, e execute de novo.</li>
+</ol>
+
+<div class="saida" data-zona="s-2">
+  <label for="s-2">Saídas (original e sem o apóstrofo): cole o texto da saída ou um print (Ctrl+V)</label>
+  <textarea class="campo mono" id="s-2" data-rotulo="Saídas (original e sem o apóstrofo)" rows="4"
+    placeholder="Cole aqui o texto da saída. Para colar um print, use Win+Shift+S e depois Ctrl+V aqui."></textarea>
+  <div class="prints" aria-live="polite"></div>
+  <label class="btn btn-ghost btn-file">Anexar imagem<input type="file" accept="image/*" multiple hidden></label>
+</div>
+
+<div class="q">
+  <label for="r-2-1"><span class="q-num">2.1</span> Para que serve o apóstrofo (<code>'</code>)? O que o Scheme tentou fazer com <code>(A B C)</code> quando ele não estava lá?</label>
+  <textarea class="campo" id="r-2-1" data-rotulo="2.1 Para que serve o apóstrofo (&#x27;)? O que o Scheme tentou fazer com (A B C) quando ele não estava lá?" rows="3"></textarea>
+</div>
+
+<div class="q">
+  <label for="r-2-2"><span class="q-num">2.2</span> Escreva uma expressão que devolva o <strong>terceiro</strong> elemento de <code>'(A B C)</code> usando só <code>car</code> e <code>cdr</code>. Teste no OneCompiler e cole aqui a expressão e o resultado.</label>
+  <textarea class="campo mono" id="r-2-2" data-rotulo="2.2 Escreva uma expressão que devolva o terceiro elemento de &#x27;(A B C) usando só car e cdr. Teste no OneCompiler e cole aqui a expressão e o resultado." rows="3"></textarea>
+</div>
+
+</section>
+
+<section class="etapa" id="e3" data-etapa="3" data-titulo="Recursão e recursão em cauda">
+  <header class="etapa-head">
+    <div class="etapa-num" aria-hidden="true">3</div>
+    <div class="etapa-tit">
+      <p class="eyebrow">Prática 3 · simulador, Scheme e Python · 10 min · 0:26 a 0:36</p>
+      <h2>Recursão e recursão em cauda</h2>
+    </div>
+    <label class="feito"><input type="checkbox" class="chk-feito" id="feito-3"> Concluí</label>
+  </header>
+  
+<div class="teoria">
+  <p>Sem laços, a repetição é feita com <strong>recursão</strong>. Cada chamada de função cria um
+  <strong>registro de ativação</strong> na <strong>pilha</strong> de execução, com os parâmetros, as variáveis
+  locais e o ponto para onde voltar. Ele só é liberado quando a chamada termina (aula de subprogramas; Sebesta,
+  Cap. 10). Mil chamadas esperando umas pelas outras são mil registros na pilha.</p>
+  <p>Uma função é <strong>recursiva em cauda</strong> quando a chamada recursiva é a <strong>última</strong>
+  operação: nada fica esperando a volta (p. 655). O livro mostra o fatorial nas duas formas: a comum, em que a
+  multiplicação fica para depois, e a em cauda, que leva o resultado parcial num parâmetro
+  <em>acumulador</em> (<code>facthelper</code>, p. 656).</p>
+  <p><strong>Otimização da chamada em cauda:</strong> como nada fica esperando, o sistema <em>pode</em>
+  reaproveitar o registro de ativação em vez de empilhar um novo, e a recursão passa a ocupar espaço
+  constante, como um laço. Nem toda linguagem faz essa otimização. Algumas, além disso, limitam quantas
+  chamadas podem estar empilhadas ao mesmo tempo.</p>
+  <p class="nota">Sintaxe do Scheme (<code>cond</code>, <code>null?</code>, <code>eq?</code>, <code>#t</code>...):
+  veja o quadro <a href="#glos-scheme">Como ler este código (Scheme)</a> da Prática 2. Em Python,
+  <code>1_000_000</code> é só o número 1000000 escrito com separadores.</p>
+</div>
+<div class="pilha" id="pilha">
+  <div class="pilha-top">
+    <label for="pilha-n">n =</label>
+    <select id="pilha-n"><option>3</option><option selected>4</option><option>5</option><option>6</option></select>
+    <button type="button" class="btn btn-b" id="pilha-passo">Próximo passo</button>
+    <button type="button" class="btn btn-ghost" id="pilha-tudo">Mostrar tudo</button>
+    <button type="button" class="btn btn-ghost" id="pilha-reset">Recomeçar</button>
+  </div>
+  <div class="pilha-cols">
+    <div class="pilha-col col-a"><h4>Recursão comum: <code>(fatorial n)</code></h4><ol class="trace" id="trace-comum"></ol>
+      <p class="pilha-medida" id="medida-comum"></p></div>
+    <div class="pilha-col col-b"><h4>Recursão em cauda: <code>(facthelper n 1)</code></h4><ol class="trace" id="trace-cauda"></ol>
+      <p class="pilha-medida" id="medida-cauda"></p></div>
+  </div>
+  <p class="sim-msg" id="pilha-msg" aria-live="polite"></p>
+  <label class="sr-only" for="r-3-sim">O que vi no passo a passo</label>
+  <textarea class="campo" id="r-3-sim" data-rotulo="O que vi no passo a passo" rows="2" readonly hidden></textarea>
+</div>
+<ol class="passos"><li>Avance o passo a passo até o fim com <code>n = 4</code> e depois com <code>n = 6</code>. O que você observar entra sozinho no relatório.</li></ol>
+
+<div class="prever">
+  <label for="r-3-prev"><span class="tag tag-prever">Antes de executar</span> O programa em Scheme chama <code>conta-ate</code> recursivamente <strong>um milhão</strong> de vezes. Vai funcionar? E a mesma função em Python?</label>
+  <textarea class="campo" id="r-3-prev" data-rotulo="Previsão: O programa em Scheme chama conta-ate recursivamente um milhão de vezes. Vai funcionar? E a mesma função em Python?" rows="2"></textarea>
+</div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Scheme</span>p3a_recursao.scm</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p3a_recursao">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/scheme" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p3a_recursao" data-lang="scheme">; Prática 3a - Recursão e recursão em cauda (Sebesta 15.5.10-15.5.12, p. 651-656)
+; Cole em https://onecompiler.com/scheme
+(define (mostra x) (display x) (newline))
+
+(define (membro atm lista)               ; o member do livro (p. 651)
+  (cond ((null? lista) #f)               ; 1) lista vazia
+        ((eq? atm (car lista)) #t)       ; 2) olha o primeiro
+        (else (membro atm (cdr lista))))) ; 3) procura no resto
+(mostra (membro &#x27;B &#x27;(A B C)))
+(mostra (membro &#x27;Z &#x27;(A B C)))
+
+(define (fatorial n)                     ; a multiplicação fica para a VOLTA
+  (if (&lt;= n 1) 1 (* n (fatorial (- n 1)))))
+
+(define (facthelper n parcial)           ; em cauda: a conta vai no parâmetro (p. 656)
+  (if (&lt;= n 1) parcial (facthelper (- n 1) (* n parcial))))
+
+(mostra (fatorial 20))
+(mostra (facthelper 20 1))
+
+(define (conta-ate n acc)                ; um milhão de chamadas em cauda
+  (if (= n 0) acc (conta-ate (- n 1) (+ acc 1))))
+(mostra (conta-ate 1000000 0))</code></pre>
+</figure>
+
+<div class="saida" data-zona="s-3a">
+  <label for="s-3a">Saída do Scheme: cole o texto da saída ou um print (Ctrl+V)</label>
+  <textarea class="campo mono" id="s-3a" data-rotulo="Saída do Scheme" rows="4"
+    placeholder="Cole aqui o texto da saída. Para colar um print, use Win+Shift+S e depois Ctrl+V aqui."></textarea>
+  <div class="prints" aria-live="polite"></div>
+  <label class="btn btn-ghost btn-file">Anexar imagem<input type="file" accept="image/*" multiple hidden></label>
+</div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Python</span>p3b_recursao.py</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p3b_recursao">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/python" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p3b_recursao" data-lang="python"># Prática 3b - A mesma recursão em cauda, agora em Python
+# Cole em https://onecompiler.com/python
+def conta_ate(n, acc):
+    if n == 0:
+        return acc
+    return conta_ate(n - 1, acc + 1)     # a chamada é a última operação
+
+print(conta_ate(500, 0))
+print(conta_ate(1_000_000, 0))</code></pre>
+</figure>
+
+<div class="saida" data-zona="s-3b">
+  <label for="s-3b">Saída do Python (as últimas linhas bastam): cole o texto da saída ou um print (Ctrl+V)</label>
+  <textarea class="campo mono" id="s-3b" data-rotulo="Saída do Python (as últimas linhas bastam)" rows="4"
+    placeholder="Cole aqui o texto da saída. Para colar um print, use Win+Shift+S e depois Ctrl+V aqui."></textarea>
+  <div class="prints" aria-live="polite"></div>
+  <label class="btn btn-ghost btn-file">Anexar imagem<input type="file" accept="image/*" multiple hidden></label>
+</div>
+
+<div class="q">
+  <label for="r-3-1"><span class="q-num">3.1</span> No passo a passo, o que <strong>cresce</strong> na recursão comum e não cresce na recursão em cauda? Por quê?</label>
+  <textarea class="campo" id="r-3-1" data-rotulo="3.1 No passo a passo, o que cresce na recursão comum e não cresce na recursão em cauda? Por quê?" rows="3"></textarea>
+</div>
+
+<div class="q">
+  <label for="r-3-2"><span class="q-num">3.2</span> Por que o Scheme fez um milhão de chamadas e o Python parou com <code>RecursionError</code>? (Dica: releia o quadro sobre a otimização da chamada em cauda e a mensagem de erro do Python. O livro fala do Scheme na p. 656.)</label>
+  <textarea class="campo" id="r-3-2" data-rotulo="3.2 Por que o Scheme fez um milhão de chamadas e o Python parou com RecursionError? (Dica: releia o quadro sobre a otimização da chamada em cauda e a mensagem de erro do Python. O livro fala do Scheme na p. 656.)" rows="3"></textarea>
+</div>
+
+</section>
+
+<section class="etapa" id="e4" data-etapa="4" data-titulo="Mão na massa: três funções sobre listas">
+  <header class="etapa-head">
+    <div class="etapa-num" aria-hidden="true">4</div>
+    <div class="etapa-tit">
+      <p class="eyebrow">Prática 4 · Scheme · 9 min · 0:36 a 0:45</p>
+      <h2>Mão na massa: três funções sobre listas</h2>
+    </div>
+    <label class="feito"><input type="checkbox" class="chk-feito" id="feito-4"> Concluí</label>
+  </header>
+  
+<div class="teoria">
+  <p>As funções de lista em Scheme seguem quase sempre o mesmo modelo, o do <code>membro</code> da Prática 3
+  (p. 651): <strong>1)</strong> a lista está vazia? Então a resposta é direta. <strong>2)</strong> Senão, faça
+  algo com o <code>car</code> e <strong>3)</strong> chame a função de novo com o <code>cdr</code>.</p>
+  <p>Exemplo do modelo, contando quantas vezes um símbolo aparece numa lista:</p>
+<pre class="exemplo"><code data-lang="scheme">(define (conta x lis)
+  (cond ((null? lis) 0)                          ; 1) vazia: zero
+        ((eq? x (car lis)) (+ 1 (conta x (cdr lis))))  ; 2) achou no car: 1 + o resto
+        (else (conta x (cdr lis)))))             ; 3) senão: só o resto</code></pre>
+  <p class="nota">Funções úteis: <code>(even? n)</code> diz se <code>n</code> é par; <code>(* a b)</code> multiplica;
+  <code>(cons x lis)</code> coloca <code>x</code> na frente da lista. Sintaxe completa no quadro
+  <a href="#glos-scheme">Como ler este código (Scheme)</a> da Prática 2.</p>
+</div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Scheme</span>p4_pratica.scm</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p4_pratica">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/scheme" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p4_pratica" data-lang="scheme">; Prática 4 - Complete as três funções em Scheme
+; Cole em https://onecompiler.com/scheme
+; Troque cada corpo marcado com &quot;complete aqui&quot; e execute de novo até aparecer &quot;ok&quot; nas três linhas.
+; Dica: siga o modelo de membro (Prática 3): caso da lista vazia, depois car e cdr.
+
+(define (confere nome obtido esperado)
+  (display nome) (display &quot;: &quot;) (display obtido)
+  (if (equal? obtido esperado)
+      (display &quot;  ok&quot;)
+      (begin (display &quot;  (esperado &quot;) (display esperado) (display &quot;)&quot;)))
+  (newline))
+
+; 1) quantos elementos a lista tem?   (tamanho &#x27;(a b c)) =&gt; 3
+(define (tamanho lis)
+  0)                                       ; complete aqui
+
+; 2) soma dos quadrados               (soma-quadrados &#x27;(1 2 3)) =&gt; 14
+(define (soma-quadrados lis)
+  0)                                       ; complete aqui
+
+; 3) só os números pares              (pares &#x27;(1 2 3 4 5 6)) =&gt; (2 4 6)   use even?
+(define (pares lis)
+  &#x27;())                                     ; complete aqui
+
+(confere &quot;tamanho&quot; (tamanho &#x27;(a b c)) 3)
+(confere &quot;soma-quadrados&quot; (soma-quadrados &#x27;(1 2 3)) 14)
+(confere &quot;pares&quot; (pares &#x27;(1 2 3 4 5 6)) &#x27;(2 4 6))</code></pre>
+</figure>
+<ol class="passos">
+  <li>Execute: as três linhas mostram o valor obtido e o esperado.</li>
+  <li>Troque cada corpo marcado com <code>complete aqui</code> e execute de novo, até aparecer <strong>ok</strong> nas três linhas.</li>
+</ol>
+
+<div class="saida" data-zona="s-4">
+  <label for="s-4">Saída final (com os três ok): cole o texto da saída ou um print (Ctrl+V)</label>
+  <textarea class="campo mono" id="s-4" data-rotulo="Saída final (com os três ok)" rows="4"
+    placeholder="Cole aqui o texto da saída. Para colar um print, use Win+Shift+S e depois Ctrl+V aqui."></textarea>
+  <div class="prints" aria-live="polite"></div>
+  <label class="btn btn-ghost btn-file">Anexar imagem<input type="file" accept="image/*" multiple hidden></label>
+</div>
+
+<div class="q">
+  <label for="r-4-1"><span class="q-num">4.1</span> Cole aqui as suas três funções (<code>tamanho</code>, <code>soma-quadrados</code> e <code>pares</code>).</label>
+  <textarea class="campo mono" id="r-4-1" data-rotulo="4.1 Cole aqui as suas três funções (tamanho, soma-quadrados e pares)." rows="8"></textarea>
+</div>
+
+<div class="q">
+  <label for="r-4-2"><span class="q-num">4.2</span> Qual foi a parte mais difícil? Onde você usou <code>null?</code>, <code>car</code> e <code>cdr</code> em cada função?</label>
+  <textarea class="campo" id="r-4-2" data-rotulo="4.2 Qual foi a parte mais difícil? Onde você usou null?, car e cdr em cada função?" rows="3"></textarea>
+</div>
+
+</section>
+
+<section class="etapa" id="e5" data-etapa="5" data-titulo="Haskell: padrões, compreensões e preguiça">
+  <header class="etapa-head">
+    <div class="etapa-num" aria-hidden="true">5</div>
+    <div class="etapa-tit">
+      <p class="eyebrow">Prática 5 · Haskell · 9 min · 0:45 a 0:54</p>
+      <h2>Haskell: padrões, compreensões e preguiça</h2>
+    </div>
+    <label class="feito"><input type="checkbox" class="chk-feito" id="feito-5"> Concluí</label>
+  </header>
+  
+<div class="teoria">
+  <p>O <strong>Haskell</strong> é <strong>puramente funcional</strong>, tem tipagem forte com
+  <strong>inferência</strong> e usa <strong>avaliação preguiçosa</strong>: uma expressão só é calculada se e
+  quando o valor for necessário (p. 666 e 669). Por isso dá para definir listas <strong>infinitas</strong>,
+  como <code>[0 ..]</code>, e usar só o pedaço de que se precisa (p. 670). As funções são definidas por
+  <strong>casamento de padrões</strong>, e as <strong>compreensões de lista</strong> imitam a notação de
+  conjuntos da matemática (p. 667-669).</p>
+  <p>Linguagens como Scheme, ML, Java e C são <strong>estritas</strong>: avaliam todos os parâmetros antes de
+  chamar a função. O Haskell é <strong>não estrito</strong>: um parâmetro que a função não usa nunca é
+  calculado (p. 669).</p>
+</div>
+
+<details class="glossario" id="glos-haskell">
+  <summary>Como ler este código (Haskell)</summary>
+  <dl><dt>fact 0 = 1<br>fact n = n * fact (n - 1)</dt><dd>função definida por <strong>casos</strong> (casamento de padrões): o primeiro caso que casa com o argumento é usado.</dd><dt>fact 20</dt><dd>chamada de função: sem parênteses e sem vírgulas. <code>take 5 squares</code> é como <code>take(5, squares)</code>.</dd><dt>[0 ..]  [1 .. n]</dt><dd>a lista 0, 1, 2, ... (infinita) / a lista de 1 até n.</dd><dt>[n * n | n &lt;- [0 ..]]</dt><dd>compreensão de lista: "a lista de <code>n * n</code>, com <code>n</code> tirado de <code>[0 ..]</code>". Condições depois de uma vírgula filtram os elementos.</dd><dt>b &lt;- t</dt><dd>"<code>b</code> tirado da lista <code>t</code>": <code>b</code> percorre os elementos de <code>t</code>.</dd><dt>(h:t)</dt><dd>padrão que separa a lista em cabeça <code>h</code> (o primeiro) e cauda <code>t</code> (o resto), como o <code>car</code> e o <code>cdr</code> do Scheme.</dd><dt>a ++ b</dt><dd>junta (concatena) duas listas.</dd><dt>take k lista</dt><dd>os <code>k</code> primeiros elementos da lista.</dd><dt>takeWhile (&lt; 50) lista</dt><dd>os elementos do começo da lista enquanto forem menores que 50.</dd><dt>n `div` 2  n `mod` i</dt><dd>divisão inteira e resto. <code>div 1 0</code> é 1 dividido por 0.</dd><dt>a || b</dt><dd>ou lógico.</dd><dt>primeiro x _ = x</dt><dd>o <code>_</code> é um parâmetro que a função ignora.</dd><dt>-- texto</dt><dd>comentário.</dd><dt>tipos</dt><dd>nenhuma função declara tipos: o compilador os descobre sozinho (<strong>inferência de tipos</strong>) e recusa o programa se eles não fecharem.</dd></dl>
+  <p class="glos-links">Para saber mais: <a href="https://www.haskell.org/tutorial/functions.html" target="_blank" rel="noopener">Funções e avaliação preguiçosa (haskell.org, em inglês) ↗</a> · <a href="https://www.haskell.org/tutorial/goodies.html" target="_blank" rel="noopener">Listas e compreensões (haskell.org, em inglês) ↗</a></p>
+</details>
+
+<div class="prever">
+  <label for="r-5-prev"><span class="tag tag-prever">Antes de executar</span> <code>squares</code> é uma lista infinita. O que você acha que <code>take 5 squares</code> imprime? E <code>primeiro 42 (div 1 0)</code>?</label>
+  <textarea class="campo" id="r-5-prev" data-rotulo="Previsão: squares é uma lista infinita. O que você acha que take 5 squares imprime? E primeiro 42 (div 1 0)?" rows="2"></textarea>
+</div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Haskell</span>p5_haskell.hs</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p5_haskell">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/haskell" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p5_haskell" data-lang="haskell">-- Prática 5 - Haskell: padrões, compreensões e avaliação preguiçosa (Sebesta 15.8, p. 666-671)
+-- Cole em https://onecompiler.com/haskell
+fact 0 = 1                                     -- casamento de padrões (p. 667)
+fact n = n * fact (n - 1)
+
+factors n = [i | i &lt;- [1 .. n `div` 2], n `mod` i == 0]   -- compreensão de lista (p. 669)
+
+sort []    = []                                -- quicksort (p. 669, corrigido)
+sort (h:t) = sort [b | b &lt;- t, b &lt;= h] ++ [h] ++ sort [b | b &lt;- t, b &gt; h]
+
+squares = [n * n | n &lt;- [0 ..]]                -- uma lista INFINITA (p. 670)
+
+member b []    = False                         -- o member do livro (p. 670)
+member b (a:x) = (a == b) || member b x
+
+primeiro x _ = x
+
+main :: IO ()
+main = do
+  print (fact 20)
+  print (factors 28)
+  print (sort [7, 2, 9, 4, 2, 8])
+  print (take 5 squares)
+  print (takeWhile (&lt; 50) squares)
+  print (member 16 squares)
+  print (primeiro 42 (div 1 0))
+  -- print (member 17 squares)                 -- tire o &quot;--&quot; do começo desta linha</code></pre>
+</figure>
+<ol class="passos">
+  <li>Execute e registre a saída.</li>
+  <li>Tire o <code>--</code> do começo da última linha, para executar <code>member 17 squares</code>, e execute de novo. Espere alguns segundos.</li>
+</ol>
+
+<div class="saida" data-zona="s-5">
+  <label for="s-5">Saídas (original e com member 17): cole o texto da saída ou um print (Ctrl+V)</label>
+  <textarea class="campo mono" id="s-5" data-rotulo="Saídas (original e com member 17)" rows="4"
+    placeholder="Cole aqui o texto da saída. Para colar um print, use Win+Shift+S e depois Ctrl+V aqui."></textarea>
+  <div class="prints" aria-live="polite"></div>
+  <label class="btn btn-ghost btn-file">Anexar imagem<input type="file" accept="image/*" multiple hidden></label>
+</div>
+
+<div class="q">
+  <label for="r-5-1"><span class="q-num">5.1</span> Como o Haskell consegue imprimir parte de uma lista infinita? E por que <code>primeiro 42 (div 1 0)</code> não deu erro de divisão por zero?</label>
+  <textarea class="campo" id="r-5-1" data-rotulo="5.1 Como o Haskell consegue imprimir parte de uma lista infinita? E por que primeiro 42 (div 1 0) não deu erro de divisão por zero?" rows="3"></textarea>
+</div>
+
+<div class="q">
+  <label for="r-5-2"><span class="q-num">5.2</span> O que aconteceu com <code>member 17 squares</code>? Por que ele nunca termina, enquanto <code>member 16 squares</code> terminou? Como você corrigiria? (Dica: <code>squares</code> está em ordem crescente. Quando já dá para desistir da busca? O livro mostra uma solução na p. 670.)</label>
+  <textarea class="campo" id="r-5-2" data-rotulo="5.2 O que aconteceu com member 17 squares? Por que ele nunca termina, enquanto member 16 squares terminou? Como você corrigiria? (Dica: squares está em ordem crescente. Quando já dá para desistir da busca? O livro mostra uma solução na p. 670.)" rows="3"></textarea>
+</div>
+
+</section>
+
+<section class="etapa" id="e6" data-etapa="6" data-titulo="Você já usa funcional">
+  <header class="etapa-head">
+    <div class="etapa-num" aria-hidden="true">6</div>
+    <div class="etapa-tit">
+      <p class="eyebrow">Prática 6 · JavaScript e Java · 7 min · 0:54 a 1:01</p>
+      <h2>Você já usa funcional</h2>
+    </div>
+    <label class="feito"><input type="checkbox" class="chk-feito" id="feito-6"> Concluí</label>
+  </header>
+  
+<div class="teoria">
+  <p>As linguagens imperativas adotaram as ideias funcionais (p. 674-677): funções anônimas, funções que
+  devolvem funções e <em>pipelines</em> com <code>filter</code>, <code>map</code> e <code>reduce</code>.
+  Uma função que "lembra" variáveis do lugar onde foi criada é um <strong>fechamento</strong> (aula de
+  subprogramas): ela guarda uma ligação com esse ambiente, e as variáveis capturadas continuam existindo
+  enquanto a função existir (p. 675-676). <strong>Currying</strong> é transformar uma função de vários
+  parâmetros numa cadeia de funções de um parâmetro cada: em vez de <code>vezes(5, 3)</code>, escreve-se
+  <code>vezes(5)(3)</code>, e <code>vezes(5)</code> sozinho já é uma função útil (p. 665-666).</p>
+</div>
+
+<details class="glossario" id="glos-js-java">
+  <summary>Como ler este código (JavaScript e Java)</summary>
+  <dl><dt>(n) =&gt; x + n</dt><dd>JavaScript: função de seta com parâmetro <code>n</code> que devolve <code>x + n</code>. <code>(n) =&gt; (x) =&gt; x + n</code> é uma função que devolve outra função.</dd><dt>lista.filter(f)</dt><dd>JavaScript: os elementos para os quais <code>f</code> devolve verdadeiro.</dd><dt>lista.map(f)</dt><dd>JavaScript: aplica <code>f</code> a cada elemento e devolve a lista dos resultados.</dd><dt>lista.reduce(f, inicial)</dt><dd>JavaScript: combina os elementos com <code>f(acumulado, elemento)</code>, começando do valor inicial.</dd><dt>Object.freeze(obj)</dt><dd>JavaScript: impede que o objeto seja alterado.</dd><dt>{ ...original, nota: 8 }</dt><dd>JavaScript: um objeto <em>novo</em>, com os campos de <code>original</code> e o campo <code>nota</code> trocado.</dd><dt>Function&lt;Integer, Integer&gt; f = x -&gt; x + 2;</dt><dd>Java: uma função que recebe e devolve <code>Integer</code>; <code>f.apply(4)</code> a chama.</dd><dt>f.compose(g)</dt><dd>Java: a função que aplica <strong>primeiro</strong> <code>g</code> e depois <code>f</code>.</dd><dt>f.andThen(g)</dt><dd>Java: a função que aplica <strong>primeiro</strong> <code>f</code> e depois <code>g</code>.</dd><dt>record Produto(String nome, double preco)</dt><dd>Java: uma classe imutável com esses dois campos; <code>p.preco()</code> lê o campo.</dd><dt>lista.stream()...</dt><dd>Java: começa um pipeline; <code>filter</code> filtra, <code>map</code> e <code>mapToDouble</code> transformam, <code>sum</code> soma, <code>sorted</code> ordena e <code>toList</code> junta numa lista.</dd><dt>Produto::preco</dt><dd>Java: atalho para a função <code>p -&gt; p.preco()</code>.</dd></dl>
+  <p class="glos-links">Para saber mais: <a href="https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Functions/Arrow_functions" target="_blank" rel="noopener">Funções de seta (MDN) ↗</a> · <a href="https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Closures" target="_blank" rel="noopener">Closures (MDN) ↗</a> · <a href="https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Array/filter" target="_blank" rel="noopener">filter ↗</a> · <a href="https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Array/map" target="_blank" rel="noopener">map ↗</a> · <a href="https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce" target="_blank" rel="noopener">reduce ↗</a> · <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html" target="_blank" rel="noopener">Function (Java, em inglês) ↗</a> · <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html" target="_blank" rel="noopener">Stream (Java, em inglês) ↗</a></p>
+</details>
+
+<div class="prever">
+  <label for="r-6-prev"><span class="tag tag-prever">Antes de executar</span> O que <code>mais10(5)</code> e <code>[1, 2, 3].map(vezes(5))</code> vão imprimir?</label>
+  <textarea class="campo" id="r-6-prev" data-rotulo="Previsão: O que mais10(5) e [1, 2, 3].map(vezes(5)) vão imprimir?" rows="2"></textarea>
+</div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">JavaScript</span>p6a_currying.js</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p6a_currying">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/nodejs" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p6a_currying" data-lang="nodejs">// Prática 6a - Fechamentos e currying em JavaScript (Sebesta 15.7 e 15.10, p. 665-666 e 675)
+// Cole em https://onecompiler.com/nodejs
+const somador = (n) =&gt; (x) =&gt; x + n;       // devolve uma função que &quot;lembra&quot; o n
+const mais10 = somador(10);
+console.log(mais10(5));
+
+const vezes = (a) =&gt; (b) =&gt; a * b;         // currying: uma função de um parâmetro por vez
+console.log([1, 2, 3].map(vezes(5)));
+
+const soma = [1, 2, 3, 4, 5, 6]
+  .filter((n) =&gt; n % 2 === 0)
+  .map((n) =&gt; n * n)
+  .reduce((acc, n) =&gt; acc + n, 0);
+console.log(soma);
+
+const original = Object.freeze({ nome: &quot;Ana&quot;, nota: 7 });
+const corrigido = { ...original, nota: 8 };   // um valor NOVO; o original não muda
+console.log(original, corrigido);</code></pre>
+</figure>
+
+<div class="saida" data-zona="s-6a">
+  <label for="s-6a">Saída do JavaScript: cole o texto da saída ou um print (Ctrl+V)</label>
+  <textarea class="campo mono" id="s-6a" data-rotulo="Saída do JavaScript" rows="4"
+    placeholder="Cole aqui o texto da saída. Para colar um print, use Win+Shift+S e depois Ctrl+V aqui."></textarea>
+  <div class="prints" aria-live="polite"></div>
+  <label class="btn btn-ghost btn-file">Anexar imagem<input type="file" accept="image/*" multiple hidden></label>
+</div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Java</span>p6b_streams.java</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p6b_streams">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/java" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p6b_streams" data-lang="java">// Prática 6b - Lambdas e Streams em Java (Sebesta 15.10, p. 676)
+// Cole em https://onecompiler.com/java
+import java.util.*;
+import java.util.function.*;
+
+public class Main {
+    record Produto(String nome, double preco) {}
+
+    public static void main(String[] args) {
+        Function&lt;Integer, Integer&gt; f = x -&gt; x + 2;
+        Function&lt;Integer, Integer&gt; g = x -&gt; 3 * x;
+        System.out.println(f.compose(g).apply(4));     // f(g(4))
+        System.out.println(f.andThen(g).apply(4));     // g(f(4))
+
+        List&lt;Produto&gt; produtos = List.of(new Produto(&quot;Teclado&quot;, 150), new Produto(&quot;Mouse&quot;, 80),
+                                         new Produto(&quot;Monitor&quot;, 900), new Produto(&quot;Cabo&quot;, 35));
+        double caros = produtos.stream()
+            .filter(p -&gt; p.preco() &gt; 100)
+            .mapToDouble(Produto::preco)
+            .sum();
+        System.out.println(caros);
+        System.out.println(produtos.stream().map(p -&gt; p.nome().toUpperCase()).sorted().toList());
+    }
+}</code></pre>
+</figure>
+
+<div class="saida" data-zona="s-6b">
+  <label for="s-6b">Saída do Java: cole o texto da saída ou um print (Ctrl+V)</label>
+  <textarea class="campo mono" id="s-6b" data-rotulo="Saída do Java" rows="4"
+    placeholder="Cole aqui o texto da saída. Para colar um print, use Win+Shift+S e depois Ctrl+V aqui."></textarea>
+  <div class="prints" aria-live="polite"></div>
+  <label class="btn btn-ghost btn-file">Anexar imagem<input type="file" accept="image/*" multiple hidden></label>
+</div>
+
+<div class="q">
+  <label for="r-6-1"><span class="q-num">6.1</span> <code>somador(10)</code> já terminou de executar quando <code>mais10(5)</code> é chamado. Como a função devolvida ainda "lembra" o 10?</label>
+  <textarea class="campo" id="r-6-1" data-rotulo="6.1 somador(10) já terminou de executar quando mais10(5) é chamado. Como a função devolvida ainda &quot;lembra&quot; o 10?" rows="3"></textarea>
+</div>
+
+<div class="q">
+  <label for="r-6-2"><span class="q-num">6.2</span> Por que <code>f.compose(g).apply(4)</code> e <code>f.andThen(g).apply(4)</code> deram resultados diferentes? Qual deles corresponde ao <code>compor(f, g)</code> da Prática 1?</label>
+  <textarea class="campo" id="r-6-2" data-rotulo="6.2 Por que f.compose(g).apply(4) e f.andThen(g).apply(4) deram resultados diferentes? Qual deles corresponde ao compor(f, g) da Prática 1?" rows="3"></textarea>
+</div>
+
+</section>
+
+<section class="etapa" id="e7" data-etapa="7" data-titulo="O laço vira pipeline">
+  <header class="etapa-head">
+    <div class="etapa-num" aria-hidden="true">7</div>
+    <div class="etapa-tit">
+      <p class="eyebrow">Prática 7 · Java, JavaScript ou Python · 8 min · 1:01 a 1:09</p>
+      <h2>O laço vira pipeline</h2>
+    </div>
+    <label class="feito"><input type="checkbox" class="chk-feito" id="feito-7"> Concluí</label>
+  </header>
+  
+<div class="teoria">
+  <p>Agora é a sua vez. Escolha <strong>dois</strong> dos três programas abaixo e reescreva o laço sem laço e
+  sem variável acumuladora, usando as formas funcionais da linguagem: <code>stream()</code> em Java,
+  <code>filter</code>/<code>map</code> em JavaScript e compreensão de lista em Python. A sua versão precisa
+  imprimir <strong>o mesmo resultado</strong> que a original.</p>
+</div>
+<div class="cola">
+  <h3>Cola: o formato de um pipeline em cada linguagem</h3>
+  <p class="nota">São modelos genéricos: troque <code>condição</code> e <code>expressão</code> pelo que o seu exercício pede.</p>
+  <strong>Java</strong>
+<pre>int resultado = lista.stream()
+    .filter(x -&gt; condição)          // fica só com quem passa no teste
+    .mapToInt(x -&gt; expressão)       // transforma cada um num int
+    .sum();                         // soma tudo</pre>
+  <strong>JavaScript</strong>
+<pre>const nova = lista
+  .filter((x) =&gt; condição)
+  .map((x) =&gt; expressão);
+console.log(nova.join(", "));      // junta os elementos num texto, separados por vírgula</pre>
+  <strong>Python</strong>
+<pre>nova = [expressão for x in lista if condição]          # filtra e transforma
+nova = [valor1 if condição else valor2 for x in lista]  # escolhe um valor para cada elemento</pre>
+  <p class="links">Documentação: <a href="https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Array/filter" target="_blank" rel="noopener">filter ↗</a> · <a href="https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Array/map" target="_blank" rel="noopener">map ↗</a> (JavaScript) ·
+  <a href="https://docs.python.org/pt-br/3/tutorial/datastructures.html#list-comprehensions" target="_blank" rel="noopener">compreensões de lista ↗</a> · <a href="https://docs.python.org/pt-br/3/reference/expressions.html#conditional-expressions" target="_blank" rel="noopener">expressão condicional ↗</a> (Python) ·
+  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html" target="_blank" rel="noopener">Stream (em inglês) ↗</a> (Java)</p>
+</div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Java</span>p7_ex1.java</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p7_ex1">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/java" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p7_ex1" data-lang="java">// Prática 7 - Exercício 1: reescreva o laço como um pipeline (stream)
+// Cole em https://onecompiler.com/java
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;Integer&gt; nums = List.of(3, 8, 5, 12, 7, 6);
+        int soma = 0;
+        for (int n : nums) {
+            if (n % 2 == 0) {
+                soma += n * n;
+            }
+        }
+        System.out.println(soma);
+    }
+}</code></pre>
+</figure>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">JavaScript</span>p7_ex2.js</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p7_ex2">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/nodejs" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p7_ex2" data-lang="nodejs">// Prática 7 - Exercício 2: reescreva o laço com filter e map
+// Cole em https://onecompiler.com/nodejs
+const alunos = [
+  { nome: &quot;Ana&quot;, nota: 8.5 },
+  { nome: &quot;Bruno&quot;, nota: 5.0 },
+  { nome: &quot;Carla&quot;, nota: 7.0 },
+  { nome: &quot;Davi&quot;, nota: 9.5 },
+];
+const aprovados = [];
+for (let i = 0; i &lt; alunos.length; i++) {
+  if (alunos[i].nota &gt;= 6) {
+    aprovados.push(alunos[i].nome.toUpperCase());
+  }
+}
+console.log(aprovados.join(&quot;, &quot;));</code></pre>
+</figure>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Python</span>p7_ex3.py</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p7_ex3">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/python" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p7_ex3" data-lang="python"># Prática 7 - Exercício 3: reescreva o laço como uma compreensão de lista
+# Cole em https://onecompiler.com/python
+precos = [50.0, 120.0, 80.0, 200.0]
+com_desconto = []
+for p in precos:
+    if p &gt; 100:
+        com_desconto.append(p * 0.9)
+    else:
+        com_desconto.append(p)
+print(com_desconto)</code></pre>
+</figure>
+
+<div class="q">
+  <label for="r-7-1"><span class="q-num">7.1</span> Primeiro exercício escolhido (1, 2 ou 3): cole o seu código reescrito.</label>
+  <textarea class="campo mono" id="r-7-1" data-rotulo="7.1 Primeiro exercício escolhido (1, 2 ou 3): cole o seu código reescrito." rows="7"></textarea>
+</div>
+
+<div class="q">
+  <label for="r-7-2"><span class="q-num">7.2</span> Segundo exercício escolhido: cole o seu código reescrito.</label>
+  <textarea class="campo mono" id="r-7-2" data-rotulo="7.2 Segundo exercício escolhido: cole o seu código reescrito." rows="7"></textarea>
+</div>
+
+<div class="saida" data-zona="s-7">
+  <label for="s-7">Saídas das suas versões: cole o texto da saída ou um print (Ctrl+V)</label>
+  <textarea class="campo mono" id="s-7" data-rotulo="Saídas das suas versões" rows="4"
+    placeholder="Cole aqui o texto da saída. Para colar um print, use Win+Shift+S e depois Ctrl+V aqui."></textarea>
+  <div class="prints" aria-live="polite"></div>
+  <label class="btn btn-ghost btn-file">Anexar imagem<input type="file" accept="image/*" multiple hidden></label>
+</div>
+
+<div class="q">
+  <label for="r-7-3"><span class="q-num">7.3</span> Qual versão é mais fácil de <strong>ler</strong>: a com laço ou a funcional? E qual é mais fácil de <strong>depurar</strong> (por exemplo, para ver um valor intermediário)?</label>
+  <textarea class="campo" id="r-7-3" data-rotulo="7.3 Qual versão é mais fácil de ler: a com laço ou a funcional? E qual é mais fácil de depurar (por exemplo, para ver um valor intermediário)?" rows="3"></textarea>
+</div>
+
+</section>
+
+<section class="etapa" id="e8" data-etapa="8" data-titulo="O que fica do paradigma funcional">
+  <header class="etapa-head">
+    <div class="etapa-num" aria-hidden="true">8</div>
+    <div class="etapa-tit">
+      <p class="eyebrow">Fechamento · 6 min · 1:09 a 1:15</p>
+      <h2>O que fica do paradigma funcional</h2>
+    </div>
+    <label class="feito"><input type="checkbox" class="chk-feito" id="feito-8"> Concluí</label>
+  </header>
+  
+<div class="teoria"><p>Verdadeiro ou falso? Responda com base no que você viu nas práticas.</p></div>
+<div class="quem">
+  <label for="r-8-a">Uma função pura pode ler uma variável global que muda.</label>
+  <select class="campo" id="r-8-a" data-rotulo="Uma função pura pode ler uma variável global que muda."><option></option><option>Verdadeiro</option><option>Falso</option></select>
+  <label for="r-8-b">Em Scheme, a recursão em cauda não faz a pilha crescer.</label>
+  <select class="campo" id="r-8-b" data-rotulo="Em Scheme, a recursão em cauda não faz a pilha crescer."><option></option><option>Verdadeiro</option><option>Falso</option></select>
+  <label for="r-8-c">O Python otimiza a recursão em cauda.</label>
+  <select class="campo" id="r-8-c" data-rotulo="O Python otimiza a recursão em cauda."><option></option><option>Verdadeiro</option><option>Falso</option></select>
+  <label for="r-8-d">Em Haskell, <code>[1 ..]</code> só é calculada à medida que é usada.</label>
+  <select class="campo" id="r-8-d" data-rotulo="Em Haskell, [1 ..] só é calculada à medida que é usada."><option></option><option>Verdadeiro</option><option>Falso</option></select>
+  <label for="r-8-e"><code>filter</code>, <code>map</code> e <code>reduce</code> dispensam laço e variável acumuladora.</label>
+  <select class="campo" id="r-8-e" data-rotulo="filter, map e reduce dispensam laço e variável acumuladora."><option></option><option>Verdadeiro</option><option>Falso</option></select>
+  <label for="r-8-f">Currying transforma uma função de vários parâmetros numa cadeia de funções de um parâmetro.</label>
+  <select class="campo" id="r-8-f" data-rotulo="Currying transforma uma função de vários parâmetros numa cadeia de funções de um parâmetro."><option></option><option>Verdadeiro</option><option>Falso</option></select>
+</div>
+<p class="sub">A soma dos cubos de 1 a n, nos dois estilos (p. 678):</p>
+
+<figure class="code">
+  <figcaption><span class="code-file"><span class="code-lang">C</span>para ler</span></figcaption>
+  <pre><code id="c-est-c" data-lang="c">int sum_cubes(int n) {          // Sebesta, p. 678
+    int sum = 0;
+    for (int index = 1; index &lt;= n; index++)
+        sum += index * index * index;
+    return sum;
+}</code></pre>
+</figure>
+
+<figure class="code">
+  <figcaption><span class="code-file"><span class="code-lang">Haskell</span>para ler</span></figcaption>
+  <pre><code id="c-est-haskell" data-lang="haskell">sumCubes n = sum (map (^3) [1 .. n])     -- Sebesta, p. 678</code></pre>
+</figure>
+<p class="nota">Como ler a versão em Haskell: <code>[1 .. n]</code> é a lista de 1 até n; <code>map (^3)</code> eleva cada
+elemento ao cubo; <code>sum</code> soma tudo. Leia da direita para a esquerda: gera a lista, eleva ao cubo, soma.</p>
+
+<div class="q">
+  <label for="r-8-1"><span class="q-num">8.1</span> Qual versão é mais fácil de entender, e por quê? O livro estima que um programa funcional costuma levar cerca de <strong>2 vezes</strong> mais tempo para executar (p. 678). Em que tipo de sistema você aceitaria esse custo, e em qual não?</label>
+  <textarea class="campo" id="r-8-1" data-rotulo="8.1 Qual versão é mais fácil de entender, e por quê? O livro estima que um programa funcional costuma levar cerca de 2 vezes mais tempo para executar (p. 678). Em que tipo de sistema você aceitaria esse custo, e em qual não?" rows="4"></textarea>
+</div>
+
+<div class="q">
+  <label for="r-8-2"><span class="q-num">8.2</span> Em uma frase: o que mais surpreendeu você nesta atividade?</label>
+  <textarea class="campo" id="r-8-2" data-rotulo="8.2 Em uma frase: o que mais surpreendeu você nesta atividade?" rows="2"></textarea>
+</div>
+<p class="sub">Desafio extra (opcional, se sobrar tempo): o código do livro roda?</p>
+<div class="teoria"><p>O quicksort em Haskell foi copiado exatamente como está impresso na p. 669 do livro.
+Ele não compila.</p>
+<p><strong>A ideia do algoritmo:</strong> o primeiro elemento <code>h</code> é o <em>pivô</em>. Ordena-se a lista dos
+elementos menores ou iguais a <code>h</code>, junta-se <code>h</code> e, depois, a lista ordenada dos maiores. A versão
+correta está na Prática 5. Lembre que, numa compreensão, <code>b &lt;- t</code> quer dizer "<code>b</code> tirado da
+lista <code>t</code>" e o que vem depois da vírgula é um filtro (quadro
+<a href="#glos-haskell">Como ler este código (Haskell)</a>).</p></div>
+
+<figure class="code">
+  <figcaption>
+    <span class="code-file"><span class="code-lang">Haskell</span>p8_quicksort_livro.hs</span>
+    <span class="code-acts">
+      <button type="button" class="btn btn-copy" data-alvo="c-p8_quicksort_livro">Copiar código</button>
+      <a class="btn btn-run" href="https://onecompiler.com/haskell" target="_blank" rel="noopener">Abrir no OneCompiler ↗</a>
+    </span>
+  </figcaption>
+  <pre><code id="c-p8_quicksort_livro" data-lang="haskell">-- Desafio extra - O quicksort da p. 669 do Sebesta (11ª ed.), copiado COMO ESTÁ IMPRESSO
+-- Cole em https://onecompiler.com/haskell
+-- Este programa NÃO compila. Leia a mensagem de erro e encontre o problema.
+sort [] = []
+sort (h:t) = sort [b | b &lt;- t, b &lt;- h]
+             ++ [h] ++
+             sort [b | b &lt;- t, b &gt; h]
+
+main :: IO ()
+main = print (sort [7, 2, 9, 4, 2, 8])</code></pre>
+</figure>
+
+<div class="q">
+  <label for="r-8-3"><span class="q-num">8.3</span> Qual é o erro de impressão, e como corrigir? O que a mensagem do compilador diz sobre o tipo que ele inferiu?</label>
+  <textarea class="campo" id="r-8-3" data-rotulo="8.3 Qual é o erro de impressão, e como corrigir? O que a mensagem do compilador diz sobre o tipo que ele inferiu?" rows="3"></textarea>
+</div>
+
+</section>
+
+  <section class="bloco" id="entrega" aria-labelledby="entrega-tit">
+    <h2 id="entrega-tit">Entrega</h2>
+    <p>Confira se respondeu tudo, gere o relatório e salve em PDF (na janela de impressão, escolha
+    <strong>Salvar como PDF</strong>). Envie o arquivo no ambiente da disciplina com o nome
+    <code>Aula12_SeuNome.pdf</code>. Se preferir, baixe o relatório em HTML, que também abre em qualquer navegador.</p>
+    <div class="relatorio-acoes">
+      <button type="button" class="btn btn-main" id="btn-gerar">Gerar relatório</button>
+      <button type="button" class="btn btn-ghost" id="btn-pdf">Salvar em PDF</button>
+      <button type="button" class="btn btn-ghost" id="btn-baixar">Baixar relatório (.html)</button>
+      <button type="button" class="btn btn-ghost" id="btn-limpar">Apagar minhas respostas</button>
+    </div>
+    <p class="salvo" id="salvo" aria-live="polite"></p>
+  </section>
+</main>
+
+<section id="relatorio" class="conteudo" aria-label="Relatório">
+  <p class="rel-falta" id="rel-falta" hidden></p>
+  <div class="rel" id="rel-conteudo"></div>
+</section>
+
+<footer class="rodape">Referência: Sebesta, R. W. <em>Conceitos de Linguagens de Programação</em>, 11ª ed., Cap. 15.
+Programas testados no OneCompiler em outubro de 2026.</footer>
+<script>(function(){
+  const CHAVE = 'aula12-laboratorio-funcional-v1';
+  const PLANO = [[0, "Preparação", 8], [1, "Prática 1", 9], [2, "Prática 2", 9], [3, "Prática 3", 10], [4, "Prática 4", 9], [5, "Prática 5", 9], [6, "Prática 6", 7], [7, "Prática 7", 8], [8, "Fechamento", 6]];
+  const TOTAL_MIN = 75;
+  const reduzido = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const el = id => document.getElementById(id);
+
+  // ---------------------------------------------------------------- armazenamento
+  let estado = {campos:{}, prints:{}, feito:{}, relogio:{inicio:null, acumulado:0}, sim:{ordens:[]}};
+  try { const s = JSON.parse(localStorage.getItem(CHAVE)); if (s) estado = Object.assign(estado, s); } catch(e) {}
+  const msgSalvo = document.getElementById('salvo');
+  let pendente = null;
+  function salvar(){
+    clearTimeout(pendente);
+    pendente = setTimeout(() => {
+      try { localStorage.setItem(CHAVE, JSON.stringify(estado)); msgSalvo.textContent = 'Respostas salvas neste navegador.'; }
+      catch(e){ msgSalvo.textContent = 'Não foi possível salvar automaticamente (navegador bloqueou ou faltou espaço). Gere o relatório antes de fechar a página.'; }
+    }, 300);
+  }
+
+  // ---------------------------------------------------------------- realce de sintaxe
+  const PALAVRAS = {
+    java:'public class static void int long new return throws import final for if else try catch synchronized Runnable Thread String System Object true false null',
+    python:'def return for in if elif else from import print True False None and or not',
+    go:'package import func for range go defer const var make chan close select case if return struct',
+    rust:'use fn let mut for in move loop match if else Vec Arc Mutex thread',
+    nodejs:'const let function return for of if else while new console setTimeout Promise true false',
+    scheme:'define lambda cond else if let car cdr cons list display newline begin apply map',
+    haskell:'main do print where let in if then else otherwise take takeWhile div mod IO',
+    prolog:'is not fail true',
+    c:'int return for if else void char printf include static'
+  };
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  document.querySelectorAll('pre code[data-lang]').forEach(el => {
+    const lang = el.dataset.lang, src = el.textContent;
+    el.dataset.cru = src;
+    const kw = new Set(PALAVRAS[lang].split(' '));
+    const com = {python:'#[^\\n]*', scheme:';[^\\n]*', haskell:'--[^\\n]*', prolog:'%[^\\n]*'}[lang] || '\\/\\/[^\\n]*';
+    const re = new RegExp('(' + com + ')|("(?:\\\\.|[^"\\\\])*")|(\\b\\d[\\d_]*\\b)|([A-Za-z_]\\w*)|([\\s\\S])', 'g');
+    let out = '', m;
+    while ((m = re.exec(src))) {
+      if (m[1]) out += '<span class="tk-c">' + esc(m[1]) + '</span>';
+      else if (m[2]) out += '<span class="tk-s">' + esc(m[2]) + '</span>';
+      else if (m[3]) out += '<span class="tk-n">' + m[3] + '</span>';
+      else if (m[4]) out += kw.has(m[4]) ? '<span class="tk-k">' + m[4] + '</span>' : m[4];
+      else out += esc(m[5]);
+    }
+    el.innerHTML = out;
+  });
+
+  // ---------------------------------------------------------------- copiar
+  document.querySelectorAll('.btn-copy').forEach(b => b.addEventListener('click', () => {
+    const texto = document.getElementById(b.dataset.alvo).dataset.cru;
+    const ok = () => { const t = b.textContent; b.textContent = 'Copiado!'; b.classList.add('ok');
+                       setTimeout(() => { b.textContent = t; b.classList.remove('ok'); }, 1600); };
+    const reserva = () => { const ta = document.createElement('textarea'); ta.value = texto; document.body.appendChild(ta);
+                            ta.select(); try { document.execCommand('copy'); ok(); } catch(e) {} ta.remove(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(ok, reserva);
+    else reserva();
+  }));
+
+  // ---------------------------------------------------------------- campos
+  const campos = [...document.querySelectorAll('.campo')];
+  campos.forEach(el => {
+    if (estado.campos[el.id] !== undefined) el.value = estado.campos[el.id];
+    const marca = () => el.classList.toggle('preenchido', el.value.trim() !== '');
+    marca();
+    el.addEventListener('input', () => { estado.campos[el.id] = el.value; marca(); salvar(); });
+    el.addEventListener('change', () => { estado.campos[el.id] = el.value; marca(); salvar(); });
+  });
+
+  // ---------------------------------------------------------------- prints (colar ou anexar imagens)
+  function reduzir(arquivo){
+    return new Promise((ok, erro) => {
+      const fr = new FileReader();
+      fr.onload = () => { const img = new Image(); img.onload = () => {
+          const k = Math.min(1, 1400 / img.width), c = document.createElement('canvas');
+          c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+          const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+          ok(c.toDataURL('image/jpeg', .82)); };
+        img.onerror = erro; img.src = fr.result; };
+      fr.onerror = erro; fr.readAsDataURL(arquivo);
+    });
+  }
+  function desenhaPrints(zona){
+    const id = zona.dataset.zona, box = zona.querySelector('.prints');
+    box.innerHTML = '';
+    (estado.prints[id] || []).forEach((url, i) => {
+      const d = document.createElement('div'); d.className = 'print';
+      d.innerHTML = '<img alt="Print anexado ' + (i + 1) + '"><button type="button">remover</button>';
+      d.querySelector('img').src = url;
+      d.querySelector('button').onclick = () => { estado.prints[id].splice(i, 1); desenhaPrints(zona); salvar(); };
+      box.appendChild(d);
+    });
+  }
+  async function adiciona(zona, arquivos){
+    const id = zona.dataset.zona;
+    for (const f of arquivos) {
+      if (!f.type.startsWith('image/')) continue;
+      try { (estado.prints[id] = estado.prints[id] || []).push(await reduzir(f)); } catch(e) {}
+    }
+    desenhaPrints(zona); salvar();
+  }
+  document.querySelectorAll('.saida').forEach(zona => {
+    desenhaPrints(zona);
+    zona.addEventListener('paste', e => {
+      const imgs = [...(e.clipboardData ? e.clipboardData.items : [])].filter(i => i.type.startsWith('image/')).map(i => i.getAsFile());
+      if (imgs.length) { e.preventDefault(); adiciona(zona, imgs); }
+    });
+    zona.addEventListener('dragover', e => { e.preventDefault(); zona.classList.add('alvo'); });
+    zona.addEventListener('dragleave', () => zona.classList.remove('alvo'));
+    zona.addEventListener('drop', e => { e.preventDefault(); zona.classList.remove('alvo'); adiciona(zona, e.dataTransfer.files); });
+    zona.querySelector('input[type=file]').addEventListener('change', e => { adiciona(zona, e.target.files); e.target.value = ''; });
+  });
+
+  // ---------------------------------------------------------------- etapas concluídas e progresso
+  const etapas = [...document.querySelectorAll('.etapa')];
+  const barra = document.getElementById('progresso-barra'), txtProg = document.getElementById('progresso-txt');
+  function atualizaProgresso(){
+    let n = 0;
+    etapas.forEach(sec => {
+      const k = sec.dataset.etapa, ok = !!estado.feito[k];
+      sec.classList.toggle('concluida', ok);
+      const seg = document.querySelector('.linha-tempo a[href="#e' + k + '"]');
+      if (seg) seg.classList.toggle('feita', ok);
+      if (ok) n++;
+    });
+    barra.style.width = (100 * n / etapas.length) + '%';
+    txtProg.textContent = n + ' de ' + etapas.length + ' etapas';
+  }
+  document.querySelectorAll('.chk-feito').forEach(chk => {
+    const k = chk.id.replace('feito-', '');
+    chk.checked = !!estado.feito[k];
+    chk.addEventListener('change', () => { estado.feito[k] = chk.checked; atualizaProgresso(); salvar(); });
+  });
+  atualizaProgresso();
+
+  // ---------------------------------------------------------------- relógio
+  const tempoEl = document.getElementById('relogio-tempo'), etapaEl = document.getElementById('relogio-etapa'),
+        btnRel = document.getElementById('relogio-btn');
+  function decorrido(){ const r = estado.relogio; return r.acumulado + (r.inicio ? Date.now() - r.inicio : 0); }
+  function fmt(ms){ const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function tique(){
+    const ms = decorrido(), min = ms / 60000;
+    tempoEl.textContent = fmt(ms) + ' / 75:00';
+    let acc = 0, atual = PLANO[PLANO.length - 1];
+    for (const p of PLANO) { if (min < acc + p[2]) { atual = p; break; } acc += p[2]; }
+    document.querySelectorAll('.linha-tempo a').forEach(a => a.classList.toggle('atual', estado.relogio.inicio && a.getAttribute('href') === '#e' + atual[0]));
+    if (!estado.relogio.inicio && ms === 0) { etapaEl.textContent = 'Clique em Iniciar quando começar.'; etapaEl.classList.remove('atrasado'); return; }
+    const atrasado = min > TOTAL_MIN || PLANO.slice(0, atual[0]).some(p => !estado.feito[p[0]]);
+    etapaEl.textContent = min > TOTAL_MIN ? 'Tempo esgotado: finalize e gere o relatório.' : 'Agora: ' + atual[1] + (atrasado ? ' (há etapas anteriores abertas)' : '');
+    etapaEl.classList.toggle('atrasado', atrasado);
+  }
+  function rotuloBtn(){ btnRel.textContent = estado.relogio.inicio ? 'Pausar' : (decorrido() ? 'Continuar' : 'Iniciar'); }
+  btnRel.addEventListener('click', () => {
+    const r = estado.relogio;
+    if (r.inicio) { r.acumulado += Date.now() - r.inicio; r.inicio = null; } else r.inicio = Date.now();
+    rotuloBtn(); tique(); salvar();
+  });
+  document.getElementById('relogio-zerar').addEventListener('click', () => { estado.relogio = {inicio:null, acumulado:0}; rotuloBtn(); tique(); salvar(); });
+  rotuloBtn(); tique(); setInterval(tique, 1000);
+
+  // ---------------------------------------------------------------- links para os quadros "Como ler este código"
+  document.querySelectorAll('a[href^="#glos-"]').forEach(a => a.addEventListener('click', () => {
+    const d = document.querySelector(a.getAttribute('href')); if (d) d.open = true;
+  }));
+
+    // ---------------------------------------------------------------- animação de abertura: a esteira
+  const QUADROS = [
+    {est:0, itens:[[1],[2],[3],[4],[5],[6]], acc:'-', leg:'Uma lista entra na esteira. Nenhuma variável é alterada: cada estação devolve uma lista <b>nova</b>.'},
+    {est:1, itens:[[1,'sai'],[2],[3,'sai'],[4],[5,'sai'],[6]], acc:'-', leg:'<b>filter</b> (é par?): só os pares passam.'},
+    {est:1, itens:[[2],[4],[6]], acc:'-', leg:'Sobraram 2, 4 e 6.'},
+    {est:2, itens:[[4,'novo'],[16,'novo'],[36,'novo']], acc:'-', leg:'<b>map</b> (x²): cada elemento vira o seu quadrado.'},
+    {est:3, itens:[[4,'usa'],[16],[36]], acc:4, leg:'<b>reduce</b> (soma): 0 + 4 = 4'},
+    {est:3, itens:[[4,'usado'],[16,'usa'],[36]], acc:20, leg:'<b>reduce</b>: 4 + 16 = 20'},
+    {est:3, itens:[[4,'usado'],[16,'usado'],[36,'usa']], acc:56, leg:'<b>reduce</b>: 20 + 36 = <b>56</b>. Sem laço e sem variável acumuladora: <code>sum(x*x for x in lista if x % 2 == 0)</code>'}
+  ];
+  const itensEl = el('itens'), accEl = el('acc'), legEl = el('esteira-leg'), btnAnim = el('anim-btn'),
+        estacoes = [...document.querySelectorAll('.estacoes li')];
+  let quadro = 0, tocando = !reduzido, temp = null;
+  function mostra(i){
+    const q = QUADROS[i];
+    estacoes.forEach((li, k) => li.classList.toggle('agora', k === q.est));
+    itensEl.innerHTML = q.itens.map(([v, c]) => '<span class="item' + (c ? ' ' + c : '') + '">' + v + '</span>').join('');
+    accEl.textContent = q.acc; legEl.innerHTML = q.leg;
+  }
+  function avanca(){ quadro = (quadro + 1) % QUADROS.length; mostra(quadro); temp = setTimeout(avanca, quadro === QUADROS.length - 1 ? 3800 : 1800); }
+  function anima(){ btnAnim.textContent = tocando ? 'Pausar' : 'Animar'; clearTimeout(temp); if (tocando) temp = setTimeout(avanca, 1800); }
+  btnAnim.addEventListener('click', () => { tocando = !tocando; anima(); });
+  if (reduzido) quadro = QUADROS.length - 1;
+  mostra(quadro); anima();
+
+  // ---------------------------------------------------------------- simulador: a pilha do fatorial
+  estado.pilha = estado.pilha || {};
+  function comum(n){
+    const L = ['(fatorial ' + n + ')'], pend = [];
+    const monta = (miolo) => pend.map(x => '(* ' + x + ' ').join('') + miolo + ')'.repeat(pend.length);
+    for (let k = n; k > 1; k--) { pend.push(k); L.push(monta('(fatorial ' + (k - 1) + ')')); }
+    L.push(monta('1'));
+    let acc = 1;
+    while (pend.length) { acc *= pend.pop(); L.push(pend.length ? monta(String(acc)) : String(acc)); }
+    return L;
+  }
+  function cauda(n){
+    const L = ['(factorial ' + n + ')', '(facthelper ' + n + ' 1)'];
+    let k = n, p = 1;
+    while (k > 1) { p *= k; k--; L.push('(facthelper ' + k + ' ' + p + ')'); }
+    L.push(String(p));
+    return L;
+  }
+  const pendentes = s => (s.match(/\(\* /g) || []).length;
+  const selN = el('pilha-n'), olA = el('trace-comum'), olB = el('trace-cauda'), medA = el('medida-comum'), medB = el('medida-cauda'),
+        msgP = el('pilha-msg'), campoP = el('r-3-sim');
+  let TA = [], TB = [], passoP = 0;
+  function linha(txt, atual, cor){
+    const n = pendentes(txt);
+    return '<li class="' + (atual ? 'atual' : '') + '"><span class="pend">' + (cor === 'a' ? n + ' pendente' + (n === 1 ? '' : 's') : 'nada pendente') +
+           '</span><span class="expr">' + esc(txt) + '</span></li>';
+  }
+  function desenhaPilha(){
+    const a = TA.slice(0, Math.min(passoP + 1, TA.length)), b = TB.slice(0, Math.min(passoP + 1, TB.length));
+    olA.innerHTML = a.map((t, i) => linha(t, i === a.length - 1, 'a')).join('');
+    olB.innerHTML = b.map((t, i) => linha(t, i === b.length - 1, 'b')).join('');
+    const maxA = Math.max(...a.map(pendentes)), larA = Math.max(...a.map(t => t.length)), larB = Math.max(...b.map(t => t.length));
+    medA.textContent = a.length + ' passos · até ' + maxA + ' multiplicações esperando · expressão mais longa: ' + larA + ' caracteres';
+    medB.textContent = b.length + ' passos · nada esperando · expressão mais longa: ' + larB + ' caracteres';
+    const fim = passoP >= Math.max(TA.length, TB.length) - 1;
+    el('pilha-passo').disabled = fim;
+    if (fim) {
+      const n = selN.value;
+      estado.pilha[n] = 'n = ' + n + ': comum em ' + TA.length + ' passos, até ' + maxA + ' multiplicações esperando (expressão de até ' + larA +
+                        ' caracteres); em cauda em ' + TB.length + ' passos, nada esperando (até ' + larB + ' caracteres).';
+      campoP.value = Object.keys(estado.pilha).sort().map(k => estado.pilha[k]).join('\n');
+      estado.campos['r-3-sim'] = campoP.value; salvar();
+      msgP.textContent = 'As duas chegaram a ' + TA[TA.length - 1] + '. Compare o tamanho das expressões e teste outro valor de n.';
+    } else msgP.textContent = 'Passo ' + (passoP + 1) + '. Veja o que acontece com a expressão em cada coluna.';
+  }
+  function reinicia(){ const n = +selN.value; TA = comum(n); TB = cauda(n); passoP = 0; desenhaPilha();
+    msgP.textContent = 'Clique em Próximo passo: as duas versões avançam juntas.'; }
+  el('pilha-passo').addEventListener('click', () => { passoP++; desenhaPilha(); });
+  el('pilha-tudo').addEventListener('click', () => { passoP = Math.max(TA.length, TB.length) - 1; desenhaPilha(); });
+  el('pilha-reset').addEventListener('click', reinicia);
+  selN.addEventListener('change', reinicia);
+  campoP.value = Object.keys(estado.pilha).sort().map(k => estado.pilha[k]).join('\n');
+  reinicia();
+
+
+  // ---------------------------------------------------------------- relatório
+  const relSec = el('relatorio'), relConteudo = el('rel-conteudo'), relFalta = el('rel-falta');
+  function valor(c){ return (c.value || '').trim(); }
+  function montaRelatorio(){
+    const nome = valor(el('aluno-nome')) || '(sem nome)', ra = valor(el('aluno-ra')), turma = valor(el('aluno-turma'));
+    let h = '<h1>Laboratório Funcional · Aula 12</h1><p>' + esc(nome) + (ra ? ' · RA ' + esc(ra) : '') + (turma ? ' · Turma ' + esc(turma) : '') +
+            '<br>Gerado em ' + new Date().toLocaleString('pt-BR') + ' · tempo registrado no cronômetro: ' + fmt(decorrido()) + '</p>';
+    let faltam = 0;
+    etapas.forEach(sec => {
+      h += '<h2>' + esc(sec.querySelector('.eyebrow').textContent.split(' · ')[0]) + ': ' + esc(sec.dataset.titulo) + '</h2><dl>';
+      sec.querySelectorAll('.campo').forEach(c => {
+        if (c.id.startsWith('aluno-')) return;
+        const v = valor(c), mono = c.classList.contains('mono') && c.tagName === 'TEXTAREA';
+        if (!v) faltam++;
+        h += '<dt>' + esc(c.dataset.rotulo) + '</dt>' + (v ? (mono ? '<dd><pre>' + esc(v) + '</pre></dd>' : '<dd>' + esc(v) + '</dd>') : '<dd class="vazio">não respondido</dd>');
+        const zona = c.closest('.saida');
+        if (zona) (estado.prints[zona.dataset.zona] || []).forEach((u, i) => { h += '<dd><img src="' + u + '" alt="Print ' + (i + 1) + '"></dd>'; });
+      });
+      h += '</dl>';
+    });
+    relConteudo.innerHTML = h;
+    relFalta.hidden = faltam === 0;
+    relFalta.textContent = faltam ? 'Atenção: ' + faltam + ' campo(s) ainda sem resposta (marcados em vermelho no relatório). Você pode voltar, completar e gerar de novo.' : '';
+    relSec.classList.add('visivel');
+    relSec.scrollIntoView({behavior: reduzido ? 'auto' : 'smooth'});
+    return nome;
+  }
+  el('btn-gerar').addEventListener('click', montaRelatorio);
+  el('btn-pdf').addEventListener('click', () => { montaRelatorio(); document.body.classList.add('imprimindo'); setTimeout(() => window.print(), 100); });
+  window.addEventListener('afterprint', () => document.body.classList.remove('imprimindo'));
+  el('btn-baixar').addEventListener('click', () => {
+    const nome = montaRelatorio();
+    const css = '<style>body{font:15px/1.5 "Segoe UI",system-ui,sans-serif;max-width:820px;margin:2rem auto;padding:0 16px;color:#111}' +
+      'h2{border-bottom:2px solid #ddd;padding-bottom:.25rem;margin-top:1.6rem}dt{font-weight:700;margin-top:.6rem}dd{margin:.2rem 0 0;white-space:pre-wrap}' +
+      'dd.vazio{color:#b42318;font-style:italic}img{max-width:100%;border:1px solid #ccc;border-radius:6px}pre{background:#f4f4f4;padding:.6rem;border-radius:6px;white-space:pre-wrap;font:12.5px/1.45 Consolas,monospace}</style>';
+    const doc = '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Aula 12 · ' + esc(nome) + '</title>' + css + relConteudo.innerHTML + '</html>';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([doc], {type:'text/html'}));
+    a.download = 'Aula12_' + nome.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '') + '.html';
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  el('btn-limpar').addEventListener('click', () => {
+    const b = el('btn-limpar');
+    if (b.dataset.confirma !== '1') { b.dataset.confirma = '1'; b.textContent = 'Clique de novo para apagar tudo'; setTimeout(() => { b.dataset.confirma = ''; b.textContent = 'Apagar minhas respostas'; }, 4000); return; }
+    try { localStorage.removeItem(CHAVE); } catch(e) {}
+    location.reload();
+  });
+})();
+</script>
+</body>
+</html>
